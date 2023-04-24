@@ -22,6 +22,11 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
          */
         const onRequest = (scriptContext) => {
 
+            log.debug({title: 'On Request', details: 'Testing'});
+
+            let message = 'Testing Suitelet';
+            scriptContext.response.write(message);
+
         }
 
         return {onRequest}
