@@ -15,6 +15,10 @@ import 'primeicons/primeicons.css'; // Icons
 /* PrimeVue components */
 import Button       from 'primevue/button';
 import InputText    from 'primevue/inputtext';
+import DataTable    from 'primevue/datatable';
+import Column       from 'primevue/column';
+import ColumnGroup  from 'primevue/columngroup';
+import Row          from 'primevue/row';
 
 const app = createApp(App);
 
@@ -22,7 +26,11 @@ app.use(createPinia());
 app.use(router);
 app.use(PrimeVue);
 
-app.component('Button', Button);
-app.component('InputText', InputText);
+app.component('Button',         Button);
+app.component('InputText',      InputText);
+app.component('DataTable',      DataTable);
+app.component('Column',         Column);
+app.component('ColumnGroup',    ColumnGroup);
+app.component('Row',            Row);
 
 app.mount('#app');
