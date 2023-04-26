@@ -10,7 +10,9 @@ import './assets/main.css';
 /* Prime imports */
 import "primevue/resources/themes/lara-light-indigo/theme.css"; // Theme
 import "primevue/resources/primevue.min.css"; // Core
-import 'primeicons/primeicons.css'; // Icons
+import 'primeicons/primeicons.css'; // Icon
+
+import 'primeflex/primeflex.css'; // Primeflex
 
 /* PrimeVue components */
 import Button       from 'primevue/button';

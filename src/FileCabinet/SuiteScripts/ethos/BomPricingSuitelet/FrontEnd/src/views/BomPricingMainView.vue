@@ -4,7 +4,7 @@
 
 <template>
   <div class="bom-pricing-main-list">
-      <!-- <BomPricingList msg="Testing List"></BomPricingList> -->
-      <BomPricingList></BomPricingList>
+      <BomPricingList msg="Testing List"></BomPricingList>
+      <!-- <BomPricingList></BomPricingList> -->
   </div>
 </template>
