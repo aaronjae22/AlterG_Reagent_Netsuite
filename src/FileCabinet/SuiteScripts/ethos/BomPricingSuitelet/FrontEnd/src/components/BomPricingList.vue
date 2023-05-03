@@ -22,7 +22,7 @@ onMounted(() => {
 
 const refreshData = () => {
     bomPricingService.retrieveList(cloneText.value, targetText.value, hasAgreement.value).then((data: any) => {
-        debugger;
+        // debugger;
         bomPricingList.value = data.data;
     })
 }
