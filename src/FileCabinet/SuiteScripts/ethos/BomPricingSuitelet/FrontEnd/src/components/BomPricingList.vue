@@ -82,6 +82,10 @@ const refreshData = () => {
 
         <Column field="id" header="Id"></Column>
         <Column field="itemid" header="Item Id"></Column>
+        <Column field="description" header="Description"></Column>
+        <Column field="averagecost" header="Average Cost"></Column>
+        <Column field="pricelevelname" header="Price Level"></Column>
+        <Column field="price" header="Price"></Column>
 
     </DataTable>
 
