@@ -4,9 +4,9 @@ import { BomPricingService }    from "@/service/BomPricingService";
 
 import { ref, onMounted }       from 'vue';
 
-defineProps<{
+/* defineProps<{
     msg: string
-}>();
+}>(); */
 
 let bomPricingService = new BomPricingService();
 
@@ -60,8 +60,8 @@ const refreshData = () => {
                     <!-- Has Agreement? -->
                     <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2  border-round">
                         <div class="flex align-items-center" style="color: black">
-                            <Checkbox v-model="hasAgreement" inputId="hasAgreement" name="hasAgreement" :binary="true" />
-                            <!-- <Checkbox name="hasAgreement" :binary="true" /> -->
+                            <CheckBox v-model="hasAgreement" inputId="hasAgreement" name="hasAgreement" :binary="true" />
+                            <!-- <CheckBox name="hasAgreement" :binary="true" /> -->
                             <label for="hasAgreement" class="ml-2"> Has Agreement? </label>
                         </div>
                     </div>
@@ -88,15 +88,6 @@ const refreshData = () => {
         <Column field="price" header="Price"></Column>
 
     </DataTable>
-
-    <!--
-    <DataTable tableStyle="min-width: 50rem">
-        <Column field="code" header="Code"></Column>
-        <Column field="name" header="Name"></Column>
-        <Column field="category" header="Category"></Column>
-        <Column field="quantity" header="Quantity"></Column>
-    </DataTable>
-    -->
 
 </template>
 
