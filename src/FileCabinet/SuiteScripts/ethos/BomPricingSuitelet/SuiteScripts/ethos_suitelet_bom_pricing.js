@@ -96,13 +96,14 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
             }
 
 
-            // Testing Costed BOM
-            if (params.action === 'getBuildMaterials')
+            // BOM Items
+            if (params.action === 'BomItem')
             {
-                let buildMaterials = getMFGBuildOfMaterials(1902);
-                const count = buildMaterials.length;
+                let bomItem = getBomItem(3572); // AlterG Via 400
+                // let bomItem = getBomItem();
+                const count = bomItem.length;
                 const remaining = runtime.getCurrentScript().getRemainingUsage();
-                context.response.write (  {output:JSON.stringify({count: count, data: buildMaterials, remaining: remaining})} );
+                context.response.write (  {output:JSON.stringify({count: count, data: bomItem, remaining: remaining})} );
                 return;
             }
 
@@ -161,268 +162,34 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
         }
 
 
+        // Getting BOM items
+        const getBomItem = (assyId) => {
+        // const getBomItem = () => {
 
-        /* COSTEM BOM TESTING */
+            // let sql = `SELECT * FROM item WHERE (item.itemtype = 'Assembly' AND id = ?)`;
 
-        const getAllData = (assyId) =>
-        {
-            if(assyId)
-            {
-                let allRows = [],startLevel = 0;
-                let  rowCount = 0;
+            // let sql = `SELECT TOP 10 * FROM itemmember`;
 
-                let brake = 0;
+            /* let sql = `SELECT item.id, item.itemid, itemmember.id
+                                FROM item
+                                INNER JOIN itemmember
+                                ON ? = itemmember.id`; */
 
-                do {
-                    const assyObj = extractAssyItemsTest(assyId,startLevel);
-                    rowCount = assyObj.length;
-                    allRows.push( ...assyObj);
-                    startLevel++;
-                    brake++;
-
-                }while(rowCount != 0); //iterate until no rows found in the level
+            // itemquantitypricinglevel
+            let sql = `SELECT *
+                                FROM item
+                                INNER JOIN itemmember
+                                ON ? = itemmember.id`;
 
 
-                const remaining_usage = runtime.getCurrentScript().getRemainingUsage();
-                return {remaining_usage: remaining_usage, length: allRows.length, data: allRows};
-            }
-        }
+            /* let sql = `SELECT *
+                                FROM item
+                                INNER JOIN itemmember
+                                ON item.id = ?`; */
 
+            return query.runSuiteQL({query: sql, params: [assyId]}).asMappedResults();
+            // return query.runSuiteQL({query: sql}).asMappedResults();
 
-        const extractAssyItemsTest = (assyId, level) => {
-
-            let sql = getQueryByLevel(level);
-            log.debug({title:"Execution", details: sql});
-
-
-            let records = [],allRecords = [];
-            let pageIndex = 0, pageSize = 5000;
-
-            let hasMoreRecords = false;
-
-            let max = 10;
-            let cont = 0;
-
-            do {
-                //read all the data from this page
-                records =  readAllPageData(assyId, sql, pageIndex, pageSize  );
-
-                cont++;
-                pageIndex++;
-                if(records && records.length > 0)
-                {
-                    allRecords.push( ... records);
-                    hasMoreRecords = records.length == pageSize;
-                }
-                else
-                    hasMoreRecords =false;
-                // log.debug({title:'Execution info', details: {  assyId: assyId,sql: '', pageIndex: pageIndex, pageSize: pageSize } })
-            }
-            while(hasMoreRecords); //iterate over all pages, until all records get processed
-
-            sqlGlobal = sql;
-
-
-            return allRecords;
-        }
-
-
-        let sqlGlobal =null;
-
-
-        const readAllPageData = (assyId,sql, pageIndex, pageSize) =>
-        {
-
-            let startRow = (pageIndex * pageSize)
-                + (  pageIndex == 0 ? 0 : 1  ); // if pageIndex == 0, then start from 0, but if
-
-
-            let resultsObj = query.runSuiteQL({
-                query: sql,
-                params: [assyId, startRow, startRow + pageSize],
-                pageSize: 100
-            }).asMappedResults();
-
-
-            return resultsObj;
-        }
-
-
-        const getQueryByLevel = (level) =>
-        {
-            let sql = "", lastLevel = 0 ;
-            let retrieveFields  = `
-                        ,assy.billofmaterials as build_of_material,
-                        rev.id as rev_id, 
-                        rev.effectivestartdate, 
-                        rev.effectiveenddate,
-                        item.itemtype,
-                        item.itemid as item_name, 
-                        CUSTOMRECORD_PART_REVISION.name as item_rev,
-                        item.itemtype as item_type,
-                        cls.name as Prod_Line, 
-                        member.quantity, 
-                        member.bomquantity,
-                        item.lastpurchaseprice,
-                        item.averagecost, 
-                        member.itemsource, 
-                        item.vendorname,
-                        vendor.companyname as vendor_companyname, 
-                        itemVendor.vendorcode,
-                        itemVendor.preferredvendor  ,
-                        item.displayname,
-                        parent.itemid as parent                      
-                         `;
-            let lastRetrieveFields = `            
-            ,build_of_material          
-            ,rev_id                     
-            ,effectivestartdate         
-            ,effectiveenddate           
-            ,itemtype                   
-            ,item_name                  
-            ,item_rev                   
-            ,item_type                  
-            ,Prod_Line                  
-            ,quantity                   
-            ,bomquantity                
-            ,lastpurchaseprice          
-            ,averagecost                
-            ,itemsource                 
-            ,vendorname                 
-            ,vendor_companyname         
-            ,vendorcode                 
-            ,preferredvendor
-            ,displayname
-            ,parent       
-                `;
-
-            let retrieveTables = `
-                                LEFT OUTER JOIN classification cls ON item.class = cls.id
-                                LEFT OUTER JOIN itemVendor ON item.id = itemVendor.item  
-                                LEFT OUTER JOIN vendor ON itemVendor.vendor = vendor.id
-                                LEFT OUTER JOIN CUSTOMRECORD_PART_REVISION ON item.custitem_pr_revision = CUSTOMRECORD_PART_REVISION.id
-                                `;
-
-            let baseLevel = `WITH levelQuery0 AS (
-                                SELECT   
-                                assy.assembly   , member.item as item_id     
-                                ${ level == 0 ? retrieveFields : "" }                                  
-                                FROM bom
-                                INNER  JOIN bomAssembly assy ON bom.id = assy.billofmaterials
-                                INNER  JOIN item parent ON assy.assembly = parent.id                                
-                                LEFT OUTER JOIN bomRevision rev ON bom.id = rev.billofmaterials
-                                LEFT OUTER JOIN bomRevisionComponentMember member ON rev.id = member.bomrevision
-                                LEFT OUTER JOIN item ON member.item = item.id
-                                
-                                ${ level == 0 ? retrieveTables : "" }
-                                
-                                 WHERE rev.effectiveenddate IS EMPTY AND  assy.assembly = ?)
-                                `;
-
-
-
-            //if level 0, then just the base query
-            sql += baseLevel;
-
-            //${ i==level ? retrieveTables: "" /*if is the last level, retrieve all fields */ }
-
-
-            for(var i = 1 ; i <= level ; i++)
-            {
-                sql += `, levelQuery${i} as (
-                                    SELECT                                       
-                                     assy.assembly   , 
-                                     member.item as item_id
-                                    ${ i == level ? retrieveFields : "" }
-                                    FROM bom
-                                    INNER  JOIN bomAssembly assy ON bom.id = assy.billofmaterials
-                                    INNER  JOIN item parent ON assy.assembly = parent.id                                
-                                    LEFT OUTER JOIN bomRevision rev ON bom.id = rev.billofmaterials
-                                    LEFT OUTER JOIN bomRevisionComponentMember member ON rev.id = member.bomrevision
-                                    LEFT OUTER  JOIN item ON member.item = item.id
-                                    ${retrieveTables}
-                                    where rev.effectiveenddate IS EMPTY and assy.assembly in (SELECT  item_id FROM levelQuery${i-1})
-                                )` ;
-                lastLevel = i;
-            }
-
-            let query = `    
-                            select ${level} as l, assembly ,item_id 
-                             ${ lastRetrieveFields }
-                             from (
-                                    select ROWNUM AS RN,assembly,item_id
-                                     ${ lastRetrieveFields }
-                                    from (
-                                        SELECT assembly, item_id 
-                                        ${ lastRetrieveFields }
-                                        FROM levelQuery${lastLevel}
-                                    )
-                                ) where (RN between ? and ?) order by assembly
-                                `
-            return sql + query;
-
-        }
-
-
-        let parentCache = null;
-
-
-        const setSortAttr = (dataArray)=>
-        {
-            dataArray.forEach( (currentValue, index, array) =>{
-
-                if(currentValue.l === 0) //if level is 0, then set default value
-                    currentValue.s = currentValue.item_id+""; //set item_id as default sort value
-                else //
-                {
-                    let parentRecord = findParent(currentValue.assembly, index, array); //find the parent and use cache
-                    if(parentRecord)
-                        currentValue.s = parentRecord.s+"-"+ currentValue.item_id;
-                }
-
-                currentValue.l++;
-            });
-        }
-
-
-        let findParent = ( parentId , currentIndex, data ) =>
-        {
-
-            if(parentCache != null && parentCache.item_id == parentId) //check if is the same parent
-            {
-                return parentCache;
-            }
-
-
-            for(let i = currentIndex ; i >= 0 ; i --)
-            {
-                let record = data[i];
-                if(record.item_id == parentId)
-                {
-                    parentCache = record;
-                    return record;
-                }
-            }
-
-            return null;
-        }
-
-
-        const sortData = ( dataObj ) =>
-        {
-            //set data id "s"
-            setSortAttr(dataObj.data);
-
-            //sort by the attribute
-            dataObj.data.sort((previous, next) => previous.s.localeCompare(next.s));
-        }
-
-
-        const getMFGBuildOfMaterials = (assyId) => {
-            let data = getAllData(assyId);
-
-            sortData(data);
-            return data;
         }
 
 
