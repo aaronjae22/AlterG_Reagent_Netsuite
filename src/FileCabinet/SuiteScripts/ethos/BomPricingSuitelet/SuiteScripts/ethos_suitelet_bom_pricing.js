@@ -65,48 +65,65 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
                 return;
             } */
 
-            // Get items list
-            if (params.action === "retrieveBomPricingList")
-            {
-                let itemList = getItemsList();
-                // let itemCount = itemList.length;
-                const count = itemList.length;
-                const remaining = runtime.getCurrentScript().getRemainingUsage();
+            if(params.action){
 
-                itemListFiltered = itemList.filter(
-                    (obj, index) =>
-                        itemList.findIndex((item) => item.id === obj.id) === index
-                );
+                context.response.setHeader({
+                    name: 'Content-Type',
+                    value: 'application/json'
+                });
 
-                /* itemListFiltered = itemListFiltered.map(function (x) {
-                    return {
-                        ...x,
-                        averagecost: x.averagecost.toFixed(3),
-                    };
-                }) */
+                // Get items list
+                if (params.action === "retrieveBomPricingList") {
+                    let itemList = getItemsList();
+                    // let itemCount = itemList.length;
+                    const count = itemList.length;
+                    const remaining = runtime.getCurrentScript().getRemainingUsage();
+
+                    itemListFiltered = itemList.filter(
+                        (obj, index) =>
+                            itemList.findIndex((item) => item.id === obj.id) === index
+                    );
+
+                    /* itemListFiltered = itemListFiltered.map(function (x) {
+                        return {
+                            ...x,
+                            averagecost: x.averagecost.toFixed(3),
+                        };
+                    }) */
 
 
-                // log.debug({title: 'Item List', details: itemList});
-                // log.debug({title: 'Item List as Array', details: itemListFiltered});
+                    // log.debug({title: 'Item List', details: itemList});
+                    // log.debug({title: 'Item List as Array', details: itemListFiltered});
 
-                // context.response.write (  {output:JSON.stringify({count: count, data: itemList, remaining: remaining})} );
-                context.response.write (  {output:JSON.stringify({count: count, data: itemListFiltered, remaining: remaining})} );
+                    // context.response.write (  {output:JSON.stringify({count: count, data: itemList, remaining: remaining})} );
+                    context.response.write({
+                        output: JSON.stringify({
+                            count: count,
+                            data: itemListFiltered,
+                            remaining: remaining
+                        })
+                    });
 
-                return;
+                    return;
+                }
+
+                // BOM Items
+                if (params.action === 'BomItem') {
+                    let bomItem = getBomItem(params.itemId); // AlterG Via 400
+                    // let bomItem = getBomItem();
+                    const count = bomItem.length;
+                    const remaining = runtime.getCurrentScript().getRemainingUsage();
+                    context.response.write({
+                        output: JSON.stringify({
+                            count: count,
+                            data: bomItem,
+                            remaining: remaining,
+                            assyId: params.itemId
+                        })
+                    });
+                    return;
+                }
             }
-
-
-            // BOM Items
-            if (params.action === 'BomItem')
-            {
-                let bomItem = getBomItem(3572); // AlterG Via 400
-                // let bomItem = getBomItem();
-                const count = bomItem.length;
-                const remaining = runtime.getCurrentScript().getRemainingUsage();
-                context.response.write (  {output:JSON.stringify({count: count, data: bomItem, remaining: remaining})} );
-                return;
-            }
-
 
 
             // Else retrieve html page
@@ -164,33 +181,89 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
         // Getting BOM items
         const getBomItem = (assyId) => {
-        // const getBomItem = () => {
+
+            /*
+           // const getBomItem = () => {
 
             // let sql = `SELECT * FROM item WHERE (item.itemtype = 'Assembly' AND id = ?)`;
+*/
 
-            // let sql = `SELECT TOP 10 * FROM itemmember`;
-
-            /* let sql = `SELECT item.id, item.itemid, itemmember.id
-                                FROM item
-                                INNER JOIN itemmember
-                                ON ? = itemmember.id`; */
-
-            // itemquantitypricinglevel
-            let sql = `SELECT *
-                                FROM item
-                                INNER JOIN itemmember
-                                ON ? = itemmember.id`;
+            /* //THIS IS FOR LEVEL 0
+            let sql = `
+                        WITH levelQuery0 AS (
+                            SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                            FROM item i
+                            INNER JOIN itemmember im on i.id = im.parentitem
+                            where i.id = ?
+                        ) 
+                        select l.parentitem, l.item, l.quantity,l.effectivedate, l.obsoletedate, l.itemsource from levelQuery0 l
+                        `;*/
 
 
-            /* let sql = `SELECT *
-                                FROM item
-                                INNER JOIN itemmember
-                                ON item.id = ?`; */
+                let sql = `WITH levelQuery0 AS (
+                                SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM item i
+                                INNER JOIN itemmember im on i.id = im.parentitem
+                                where i.id = ?
+                            ), levelQuery1 AS (
+                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM itemmember im
+                                where im.parentitem in ( select l.item from levelQuery0 l)
+                            ),
+                            levelQuery2 AS (
+                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM itemmember im
+                                where im.parentitem in ( select l.item from levelQuery1 l)
+                            ),
+                             levelQuery3 AS (
+                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM itemmember im
+                                where im.parentitem in ( select l.item from levelQuery2 l)
+                            ),
+                             levelQuery4 AS (
+                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM itemmember im
+                                where im.parentitem in ( select l.item from levelQuery3 l)
+                            ),
+                            levelQuery5 AS (
+                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM itemmember im
+                                where im.parentitem in ( select l.item from levelQuery4 l)
+                            ),
+                              levelQuery6 AS (
+                                SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM itemmember im
+                                where im.parentitem in ( select l.item from levelQuery5 l)
+                            ),
+                            levelQuery7 AS (
+                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM itemmember im
+                                where im.parentitem in ( select l.item from levelQuery6 l)
+                            )
+                            
+                            select                             
+                            l.parentitem, ip.itemid as parent_item, ip.description as parent_description,                              
+                            l.item, i.itemid as child_item , i.description as child_description    --  ip.itemid as parent_itemid, i.itemid as child_itemid , l.parentitem, l.item, l.quantity,l.effectivedate, l.obsoletedate, l.itemsource 
+                            from levelQuery4 l
+                            inner join item i on l.item = i.id
+                            inner join item ip on l.parentitem = ip.id
+                        `;
+
 
             return query.runSuiteQL({query: sql, params: [assyId]}).asMappedResults();
             // return query.runSuiteQL({query: sql}).asMappedResults();
 
         }
+
+
+
+        const getQueryByLevel = (level) => {
+
+        }
+
+
+
+
 
 
 
