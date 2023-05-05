@@ -109,7 +109,7 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
                 // BOM Items
                 if (params.action === 'BomItem') {
-                    let bomItem = getBomItem(params.itemId); // AlterG Via 400
+                    let bomItem = getBomItem(params.itemId); // AlterG Via 400 : id 3572
                     // let bomItem = getBomItem();
                     const count = bomItem.length;
                     const remaining = runtime.getCurrentScript().getRemainingUsage();
@@ -123,6 +123,24 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
                     });
                     return;
                 }
+
+                // Break down BOM Item
+                if (params.action === 'BomItemBD') {
+                    let bomItem = getBomItemBrokenDown(params.itemId);
+                    const count = bomItem.length;
+                    const remaining = runtime.getCurrentScript().getRemainingUsage();
+                    context.response.write({
+                        output: JSON.stringify({
+                            count: count,
+                            data: bomItem,
+                            remaining: remaining,
+                            assyId: params.itemId
+                        })
+                    })
+
+                    return;
+                }
+
             }
 
 
@@ -263,7 +281,34 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
 
 
+        const getBomItemBrokenDown = (assyId) => {
 
+            /* let sql = `SELECT i.id, i.itemid, i.description, i.displayname
+                                FROM item as i
+                                WHERE id = ?`; */
+
+            /*
+            im.displayname as itemmember_displayname,
+            im.description as itemmember_description,
+             */
+
+            let sql = `SELECT
+                                i.id as item_id_code,
+                                i.itemid as item_id,
+                                i.description as item_description,
+                                i.displayname as item_displayname,
+                                im.parentitem as parentitem,
+                                im.item as itemmember_item,
+                                im.itemsource as itemmember_itemsource,
+                                im.quantity as itemmember_qty,
+                            FROM item as i
+                            INNER JOIN itemmember as im
+                            ON i.id = im.parentitem
+                            WHERE i.id = ?`;
+
+
+            return query.runSuiteQL({query: sql, params: [assyId]}).asMappedResults();
+        }
 
 
 
