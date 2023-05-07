@@ -141,6 +141,25 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
                     return;
                 }
 
+                // Testing recursive queries
+                if (params.action === 'BomQueries') {
+                    let bomItem = getQueryByLevel(params.itemId, params.levelId);
+                    log.debug({title: 'BOMQueries', details: bomItem}); // It's empty
+                    // const count = bomItem.length;
+                    const remaining = runtime.getCurrentScript().getRemainingUsage();
+                    context.response.write({
+                        output: JSON.stringify({
+                            // count: count,
+                            data: bomItem,
+                            remaining: remaining,
+                            assyId: params.itemId,
+                            levelId: params.levelId
+                        })
+                    })
+
+                    return;
+                }
+
             }
 
 
@@ -262,7 +281,7 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
                             select                             
                             l.parentitem, ip.itemid as parent_item, ip.description as parent_description,                              
                             l.item, i.itemid as child_item , i.description as child_description    --  ip.itemid as parent_itemid, i.itemid as child_itemid , l.parentitem, l.item, l.quantity,l.effectivedate, l.obsoletedate, l.itemsource 
-                            from levelQuery4 l
+                            from levelQuery2 l
                             inner join item i on l.item = i.id
                             inner join item ip on l.parentitem = ip.id
                         `;
@@ -275,7 +294,65 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
 
 
-        const getQueryByLevel = (level) => {
+        const getQueryByLevel = (assyId, level) => {
+
+            let sql;
+            // let baseLevel = 0;
+            // let lastLevel = 0;
+
+            /* let retrieveFields = {
+
+            } */
+
+            let lastPartQuery = `SELECT                             
+                                            l.parentitem, ip.itemid as parent_item,
+                                            ip.description as parent_description,                              
+                                            l.item, i.itemid as child_item,
+                                            i.description as child_description 
+                                        FROM levelQuery0 l
+                                        INNER JOIN item i ON l.item = i.id
+                                        INNER JOIN item ip ON l.parentitem = ip.id`
+
+            if (level == 0) {
+
+                let baseLevelQuery = `SELECT
+                                i.id as item_id_code,
+                                i.itemid as item_id,
+                                i.description as item_description,
+                                i.displayname as item_displayname,
+                                im.parentitem as parentitem,
+                                im.item as itemmember_item,
+                                im.itemsource as itemmember_itemsource,
+                                im.quantity as itemmember_qty,
+                            FROM item as i
+                            INNER JOIN itemmember as im
+                            ON i.id = im.parentitem
+                            WHERE i.id = ?`;
+
+                sql = query.runSuiteQL({query: baseLevelQuery, params: [assyId]}).asMappedResults();
+                // sql = baseLevelQuery;
+
+                log.debug({title: 'Base level query', details: sql});
+
+            }
+
+            /* if (level === 0) {
+
+                let baseLevelQuery = `WITH levelQuery0 AS (
+                                SELECT
+                                    im.parentitem, im.item,
+                                    im.quantity, im.effectivedate,
+                                    im.obsoletedate, im.itemsource
+                                FROM item i
+                                INNER JOIN itemmember im
+                                ON i.id = im.parentitem
+                                WHERE i.id = ?), ${lastPartQuery}`;
+                sql = query.runSuiteQL({query: baseLevelQuery, params: [assyId]}).asMappedResults();
+            } */
+
+            log.debug({title: 'SQL', details: sql});
+
+            return sql;
 
         }
 
