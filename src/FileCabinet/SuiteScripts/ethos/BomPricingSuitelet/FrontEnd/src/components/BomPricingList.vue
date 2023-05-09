@@ -62,17 +62,19 @@ const log = (value: string) => {
     </div>
 
     <!-- DATA TABLE -->
-    <DataTable :value="bomPricingList" tableStyle="min-width: 50rem" class="p-datatable-sm">
+    <DataTable :value="bomPricingList" tableStyle="min-width: 50rem" class="p-datatable-sm" style="font-size: 18px; margin-top: 15px">
 
-        <Column field="parentitem" header="Parent Item ID"></Column>
+        <!-- <Column field="parentitem" header="Parent Item ID"></Column>
         <Column field="parent_item" header="Parent Item"></Column>
-        <Column field="parent_description" header="Parent Item ID"></Column>
-        <Column field="item" header="Item ID"></Column>
-        <Column field="child_item" header="Child Item ID"></Column>
-        <Column field="child_description" header="Child Item Description"></Column>
+        <Column field="parent_description" header="Parent Item ID"></Column> -->
+
+        <Column field="item" header="Item ID" style="width: 10%"></Column>
+        <Column field="child_item" header="Item Part Number" style="width: 22%"></Column>
+        <Column field="child_description" header="Item Description" style="width: 35%"></Column>
         <Column field="averagecost" header="Average Cost"></Column>
         <Column field="quantity" header="Qty"></Column>
-        <Column field="level" header="Level"></Column>
+        <Column field="itemsource" header="Source"></Column>
+        <!-- <Column field="level" header="Level"></Column> -->
 
 
     </DataTable>
