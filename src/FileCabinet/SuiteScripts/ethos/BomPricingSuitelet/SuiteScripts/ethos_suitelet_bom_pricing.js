@@ -109,8 +109,8 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
                 // BOM Items
                 if (params.action === 'BomItem') {
-                    let bomItem = getBomItem(params.itemId); // AlterG Via 400 : id 3572
-                    // let bomItem = getBomItem();
+
+                    let bomItem =  getBomItem(params.itemId);  // AlterG Via 400
                     const count = bomItem.length;
                     const remaining = runtime.getCurrentScript().getRemainingUsage();
                     context.response.write({
@@ -123,46 +123,8 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
                     });
                     return;
                 }
-
-                // Break down BOM Item
-                if (params.action === 'BomItemBD') {
-                    let bomItem = getBomItemBrokenDown(params.itemId);
-                    const count = bomItem.length;
-                    const remaining = runtime.getCurrentScript().getRemainingUsage();
-                    context.response.write({
-                        output: JSON.stringify({
-                            count: count,
-                            data: bomItem,
-                            remaining: remaining,
-                            assyId: params.itemId
-                        })
-                    })
-
-                    return;
-                }
-
-                // Testing recursive queries
-                if (params.action === 'BomQueries') {
-                    let bomItem = getQueryByLevel(params.itemId);
-                    log.debug({title: 'BOMQueries', details: bomItem}); // It's empty
-                    const count = bomItem.length;
-                    const remaining = runtime.getCurrentScript().getRemainingUsage();
-                    context.response.write({
-                        output: JSON.stringify({
-                            count: count,
-                            data: bomItem,
-                            remaining: remaining,
-                            assyId: params.itemId
-                        })
-                    })
-
-                    return;
-                }
-
             }
-
-
-            // Else retrieve html page
+             // Else retrieve html page
             const form = serverWidget.createForm({title: 'BOM Pricing'});
             const htmlField = form.addField({
                 id: 'custpage_htmlview',
@@ -186,29 +148,63 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
         }
 
+        const getBomItem = (itemId) => {
+
+            let startLevel = 0;
+            let data = [], allData = [];
+            do {
+
+                data = getBomItemByLevel(itemId, startLevel);
+                data.forEach( d=> d.level = startLevel);
+                allData = allData.concat(data);
+                startLevel++;
+            }while( data.length > 0);
+
+            createNodePath(allData);
+
+
+            //sor allData by nodePath
+            allData.sort(function(a, b){
+                return a.nodePath.localeCompare(b.nodePath);
+            });
+
+            return allData;
+        }
+
+        const createNodePath = (data) => {
+
+            // Iterate data
+            for(let i = 0; i < data.length; i++)
+            {
+                // Get parent node
+                let parentNode = getParentNodeByParentItem(data[i].parentitem, data, i-1);
+                if(parentNode)
+                {
+                    //data[i].parentNode = parentNode;
+                    data[i].nodePath = parentNode.nodePath + '/' + data[i].item;
+                }
+                else
+                {
+                    //data[i].parentNode = null;
+                    data[i].nodePath = '/'+data[i].item;
+                }
+
+                data[i].child_description =  (data[i].child_description || data[i].child_item);
+
+            }
+
+        }
+
         const manageError = (context) => {
             log.debug({ title: "on request " + scriptContext.request.method, details: "error" });
         }
 
         const getItemsList = () => {
 
-            // let sql = `SELECT * FROM assemblyitemprice`;
-            // let sql = `SELECT TOP 10 * FROM item`;
-
-            /* let sql = `SELECT item.id, item.itemid, assemblyitemprice.price
-                                FROM item
-                                INNER JOIN assemblyitemprice
-                                ON item.id = assemblyitemprice.item`; */
-
-            let sql = `SELECT TOP 100 item.id, item.itemid, item.description, item.averagecost, aip.*
+           let sql = `SELECT TOP 100 item.id, item.itemid, item.description, item.averagecost, aip.*
                                 FROM item
                                 INNER JOIN assemblyitemprice AS aip
                                 ON item.id = aip.item`;
-
-            /* let sql = `SELECT TOP 10 *
-                                FROM item
-                                INNER JOIN assemblyitemprice
-                                ON item.id = assemblyitemprice.item`; */
 
             return query.runSuiteQL({query:sql}).asMappedResults();
 
@@ -216,194 +212,63 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
 
         // Getting BOM items
-        const getBomItem = (assyId) => {
+        const getBomItemByLevel = (assyId, level) => {
 
-            /*
-           // const getBomItem = () => {
+            let sql = getQueryByLevel(level);
 
-            // let sql = `SELECT * FROM item WHERE (item.itemtype = 'Assembly' AND id = ?)`;
-*/
+            return query.runSuiteQL({query: sql, params: [assyId]}).asMappedResults();
+        }
 
-            /* //THIS IS FOR LEVEL 0
-            let sql = `
-                        WITH levelQuery0 AS (
-                            SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
-                            FROM item i
-                            INNER JOIN itemmember im on i.id = im.parentitem
-                            where i.id = ?
-                        ) 
-                        select l.parentitem, l.item, l.quantity,l.effectivedate, l.obsoletedate, l.itemsource from levelQuery0 l
-                        `;*/
+        const getParentNodeByParentItem = (parentItem, data, startIndex) =>
+        {
+
+            //iterate data from startIndex to 0
+            for(let i = startIndex; i >= 0; i--)
+            {
+                if(data[i].item == parentItem)
+                {
+                    return data[i];
+                }
+            }
+
+            return null;
+        }
 
 
-                let sql = `WITH levelQuery0 AS (
+        const getQueryByLevel = (level) => {
+
+            let level0Query = `WITH levelQuery0 AS (
                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
                                 FROM item i
                                 INNER JOIN itemmember im on i.id = im.parentitem
                                 where i.id = ?
-                            ), levelQuery1 AS (
-                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
-                                FROM itemmember im
-                                where im.parentitem in ( select l.item from levelQuery0 l)
-                            ),
-                            levelQuery2 AS (
-                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
-                                FROM itemmember im
-                                where im.parentitem in ( select l.item from levelQuery1 l)
-                            ),
-                             levelQuery3 AS (
-                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
-                                FROM itemmember im
-                                where im.parentitem in ( select l.item from levelQuery2 l)
-                            ),
-                             levelQuery4 AS (
-                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
-                                FROM itemmember im
-                                where im.parentitem in ( select l.item from levelQuery3 l)
-                            ),
-                            levelQuery5 AS (
-                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
-                                FROM itemmember im
-                                where im.parentitem in ( select l.item from levelQuery4 l)
-                            ),
-                              levelQuery6 AS (
-                                SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
-                                FROM itemmember im
-                                where im.parentitem in ( select l.item from levelQuery5 l)
-                            ),
-                            levelQuery7 AS (
-                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
-                                FROM itemmember im
-                                where im.parentitem in ( select l.item from levelQuery6 l)
-                            )
-                            
-                            select                             
+                            )`;
+
+            let selectQuery = ` select                             
                             l.parentitem, ip.itemid as parent_item, ip.description as parent_description,                              
-                            l.item, i.itemid as child_item , i.description as child_description    --  ip.itemid as parent_itemid, i.itemid as child_itemid , l.parentitem, l.item, l.quantity,l.effectivedate, l.obsoletedate, l.itemsource 
-                            from levelQuery7 l
+                            l.item, i.itemid as child_item , i.description as child_description,    
+                            i.averagecost, l.quantity, l.effectivedate, l.obsoletedate, l.itemsource 
+                            from levelQuery${level} l
                             inner join item i on l.item = i.id
-                            inner join item ip on l.parentitem = ip.id
-                        `;
+                            inner join item ip on l.parentitem = ip.id`;
 
+            let levelQuery = ``;
 
-            return query.runSuiteQL({query: sql, params: [assyId]}).asMappedResults();
-            // return query.runSuiteQL({query: sql}).asMappedResults();
+            let sqls = [level0Query];
 
+            for(let i = 1 ; i <= level ; i++)
+            {
+                 sqls.push(`
+                            levelQuery${i} AS (
+                                 SELECT im.parentitem, im.item, im.quantity,im.effectivedate,im.obsoletedate,im.itemsource
+                                FROM itemmember im
+                                where im.parentitem in ( select l.item from levelQuery${i - 1 } l)
+                            )`);
+            }
+            levelQuery = sqls.join(',');
+            return levelQuery + selectQuery;
         }
 
-
-
-        const getQueryByLevel = (assyId) => {
-
-            let sql = "";
-            let queryResult = [];
-            let lastLevel = 0;
-
-            let baseLevel = `SELECT
-                                i.id as item_id_code,
-                                i.itemid as item_id,
-                                i.description as item_description,
-                                i.displayname as item_displayname,
-                                im.parentitem as parentitem,
-                                im.item as itemmember_item,
-                                im.itemsource as itemmember_itemsource,
-                                im.quantity as itemmember_qty,
-                            FROM item as i
-                            INNER JOIN itemmember as im
-                            ON i.id = im.parentitem
-                            WHERE i.id = ?`;
-
-            let retrieveFields = `im.parentitem, im.item, im.quantity, im.effectivedate,im.obsoletedate,im.itemsource`;
-
-            let retrieveTables = `itemmember im`;
-
-            /* let lastPartQuery = `SELECT
-                                            l.parentitem, ip.itemid as parent_item,
-                                            ip.description as parent_description,
-                                            l.item, i.itemid as child_item,
-                                            i.description as child_description
-                                        FROM levelQuery0 l
-                                        INNER JOIN item i ON l.item = i.id
-                                        INNER JOIN item ip ON l.parentitem = ip.id` */
-
-            // If level 0, then just the base query
-            sql += baseLevel;
-
-
-            queryResult = query.runSuiteQL({query: sql, params: [assyId]}).asMappedResults();
-
-            log.debug({title: 'SQL', details: queryResult.length});
-            log.debug({title: 'SQL', details: queryResult});
-
-            return queryResult;
-
-
-
-
-        }
-
-
-
-        const getBomItemBrokenDown = (assyId) => {
-
-            /* let sql = `SELECT i.id, i.itemid, i.description, i.displayname
-                                FROM item as i
-                                WHERE id = ?`; */
-
-            /*
-            im.displayname as itemmember_displayname,
-            im.description as itemmember_description,
-             */
-
-            let sql = `SELECT
-                                i.id as item_id_code,
-                                i.itemid as item_id,
-                                i.description as item_description,
-                                i.displayname as item_displayname,
-                                im.parentitem as parentitem,
-                                im.item as itemmember_item,
-                                im.itemsource as itemmember_itemsource,
-                                im.quantity as itemmember_qty,
-                            FROM item as i
-                            INNER JOIN itemmember as im
-                            ON i.id = im.parentitem
-                            WHERE i.id = ?`;
-
-
-            return query.runSuiteQL({query: sql, params: [assyId]}).asMappedResults();
-        }
-
-
-
-        // NO USAGE
-        const getReagentList = (clone,target, hasAgreement) =>
-        {
-            let sql = `
-                select * from ( 
-                select ROWNUM AS RN,* from (
-                    select        
-                    assy.id                                        as assembly_item_id            ,         
-                    assy.displayname                               as assembly_item               ,               
-                    r.custrecord_ra_assy_description               as description                 ,
-                    BUILTIN.DF( r.custrecord_ra_raw_material_item) as raw_material_part           ,
-                    v.entityid ||  ' ' || v.companyname            as raw_antibody_supplier       ,
-                    BUILTIN.DF(r.custrecord_ra_supplier_item)      as supplier_part               ,
-                    r.custrecord_ra_agreement_date                 as agreement_date              ,
-                    r.custrecord_ra_expiration_date                as contract_expiration_date    ,
-                    r.custrecord_ra_memo                           as memo                        ,      
-                    // '------------------' as div,
-                    // r.*,          
-                    // assy.
-                    from item assy 
-                    left join  customrecord_reagent r on assy.id = r.custrecord_ra_assy_item
-                    left join vendor v on v.id = r.custrecord_ra_antibody_supplier
-                    
-                    where assy.displayname like '%' || ? || '%' || ? || '%'
-                    ${ hasAgreement == 'true' ? " and r.custrecord_ra_assy_description is not null " : "" }
-                )     ) where rn between 1 and 500           
-                `;
-            return query.runSuiteQL({query:sql, params:[target,clone]}).asMappedResults();
-        }
 
         return {onRequest}
 
