@@ -10,9 +10,11 @@ import { ref, onMounted }       from 'vue';
 
 let bomPricingService = new BomPricingService();
 
-let cloneText = ref("");
+/* let cloneText = ref("");
 let targetText = ref("");
-let hasAgreement = ref(false);
+let hasAgreement = ref(false); */
+
+let itemId = ref("");
 
 let bomPricingList = ref();
 let userItemId = '';
@@ -23,7 +25,8 @@ onMounted(() => {
 
 
 const refreshData = () => {
-    bomPricingService.retrieveList(cloneText.value, targetText.value, hasAgreement.value).then((data: any) => {
+    // bomPricingService.retrieveList(cloneText.value, targetText.value, hasAgreement.value).then((data: any) => {
+    bomPricingService.retrieveList(itemId.value).then((data: any) => {
         // debugger;
         bomPricingList.value = data.data;
     })
@@ -45,12 +48,12 @@ const log = (value: string) => {
             <div class="card-container blue-container">
                 <div class="flex">
 
-                    <InputText v-model="userItemId" placeholder="Enter Item ID"/>
+                    <InputText v-model="itemId" placeholder="Enter Item ID"/>
 
                     <!-- Search icon -->
                     <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2  border-round">
-                        <Button icon="pi pi-search" aria-label="Submit" @click="log(userItemId)"/>
-                        <!-- <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" /> -->
+                        <!-- <Button icon="pi pi-search" aria-label="Submit" @click="log(itemId)"/> -->
+                        <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" />
                     </div>
 
                 </div>
@@ -61,22 +64,16 @@ const log = (value: string) => {
     <!-- DATA TABLE -->
     <DataTable :value="bomPricingList" tableStyle="min-width: 50rem" class="p-datatable-sm">
 
-        <Column header="Parent Item ID"></Column>
-        <Column header="Parent Item"></Column>
-        <Column header="Parent Description"></Column>
-        <Column header="Item"></Column>
-        <Column header="Child Item ID"></Column>
-        <Column header="Child Item Description"></Column>
-        <Column header="Average Cost"></Column>
-        <Column header="Qty"></Column>
-
-
-        <!-- <Column field="id" header="Id"></Column>
-        <Column field="itemid" header="Item Id"></Column>
-        <Column field="description" header="Description"></Column>
+        <Column field="parentitem" header="Parent Item ID"></Column>
+        <Column field="parent_item" header="Parent Item"></Column>
+        <Column field="parent_description" header="Parent Item ID"></Column>
+        <Column field="item" header="Item ID"></Column>
+        <Column field="child_item" header="Child Item ID"></Column>
+        <Column field="child_description" header="Child Item Description"></Column>
         <Column field="averagecost" header="Average Cost"></Column>
-        <Column field="pricelevelname" header="Price Level"></Column>
-        <Column field="price" header="Price"></Column> -->
+        <Column field="quantity" header="Qty"></Column>
+        <Column field="level" header="Level"></Column>
+
 
     </DataTable>
 

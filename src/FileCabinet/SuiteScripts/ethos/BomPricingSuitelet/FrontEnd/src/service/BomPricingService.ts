@@ -8,14 +8,16 @@ export class BomPricingService extends ServiceBase
 
     bomPricingUrl: string = "&d=" + (new Date().getTime());
 
-    retrieveList(clone: string, target: string, hasAgreement: boolean) : Promise<BomPricingListRequest>
+    // retrieveList(clone: string, target: string, hasAgreement: boolean) : Promise<BomPricingListRequest>
+    retrieveList(itemId: string) : Promise<BomPricingListRequest>
     {
         const params = {
-            action: 'retrieveBomPricingList',
-            // action: 'BomItem',
-            clone: clone,
+            // action: 'retrieveBomPricingList',
+            action: 'BomItem',
+            itemId: itemId,
+            /* clone: clone,
             target: target,
-            hasAgreement: hasAgreement,
+            hasAgreement: hasAgreement, */
         } as any;
 
         const queryString = Object.keys(params).map(key => key  + '=' + params[key]).join('&');
