@@ -12,6 +12,7 @@ export class BomPricingService extends ServiceBase
     {
         const params = {
             action: 'retrieveBomPricingList',
+            // action: 'BomItem',
             clone: clone,
             target: target,
             hasAgreement: hasAgreement,

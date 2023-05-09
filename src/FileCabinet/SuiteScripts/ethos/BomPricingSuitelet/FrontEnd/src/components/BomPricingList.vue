@@ -15,16 +15,22 @@ let targetText = ref("");
 let hasAgreement = ref(false);
 
 let bomPricingList = ref();
+let userItemId = '';
 
 onMounted(() => {
     refreshData();
 });
+
 
 const refreshData = () => {
     bomPricingService.retrieveList(cloneText.value, targetText.value, hasAgreement.value).then((data: any) => {
         // debugger;
         bomPricingList.value = data.data;
     })
+}
+
+const log = (value: string) => {
+    console.log(value);
 }
 
 
@@ -39,37 +45,12 @@ const refreshData = () => {
             <div class="card-container blue-container">
                 <div class="flex">
 
-                    <!-- Target -->
-                    <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2 border-round">
-                        <span class="p-float-label">
-                            <InputText id="target" v-model="targetText" />
-                            <!-- <InputText id="target" /> -->
-                            <label for="target">Target</label>
-                        </span>
-                    </div>
-
-                    <!-- Clone -->
-                    <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2  border-round">
-                        <span class="p-float-label">
-                            <InputText id="clone" v-model="cloneText" />
-                            <!-- <InputText id="clone" /> -->
-                            <label for="clone">Clone</label>
-                        </span>
-                    </div>
-
-                    <!-- Has Agreement? -->
-                    <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2  border-round">
-                        <div class="flex align-items-center" style="color: black">
-                            <CheckBox v-model="hasAgreement" inputId="hasAgreement" name="hasAgreement" :binary="true" />
-                            <!-- <CheckBox name="hasAgreement" :binary="true" /> -->
-                            <label for="hasAgreement" class="ml-2"> Has Agreement? </label>
-                        </div>
-                    </div>
+                    <InputText v-model="userItemId" placeholder="Enter Item ID"/>
 
                     <!-- Search icon -->
                     <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2  border-round">
-                        <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" />
-                        <!-- <Button icon="pi pi-search" aria-label="Submit"/> -->
+                        <Button icon="pi pi-search" aria-label="Submit" @click="log(userItemId)"/>
+                        <!-- <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" /> -->
                     </div>
 
                 </div>
@@ -80,12 +61,22 @@ const refreshData = () => {
     <!-- DATA TABLE -->
     <DataTable :value="bomPricingList" tableStyle="min-width: 50rem" class="p-datatable-sm">
 
-        <Column field="id" header="Id"></Column>
+        <Column header="Parent Item ID"></Column>
+        <Column header="Parent Item"></Column>
+        <Column header="Parent Description"></Column>
+        <Column header="Item"></Column>
+        <Column header="Child Item ID"></Column>
+        <Column header="Child Item Description"></Column>
+        <Column header="Average Cost"></Column>
+        <Column header="Qty"></Column>
+
+
+        <!-- <Column field="id" header="Id"></Column>
         <Column field="itemid" header="Item Id"></Column>
         <Column field="description" header="Description"></Column>
         <Column field="averagecost" header="Average Cost"></Column>
         <Column field="pricelevelname" header="Price Level"></Column>
-        <Column field="price" header="Price"></Column>
+        <Column field="price" header="Price"></Column> -->
 
     </DataTable>
 

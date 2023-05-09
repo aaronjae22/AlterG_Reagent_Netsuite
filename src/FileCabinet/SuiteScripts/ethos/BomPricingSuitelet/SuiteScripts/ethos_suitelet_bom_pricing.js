@@ -148,6 +148,10 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
         }
 
+        const testingCall = () => {
+            console.log('Testing');
+        }
+
         const getBomItem = (itemId) => {
 
             let startLevel = 0;
