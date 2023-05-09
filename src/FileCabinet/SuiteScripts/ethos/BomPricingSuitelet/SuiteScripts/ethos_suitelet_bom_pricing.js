@@ -193,7 +193,7 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
                     data[i].nodePath = '/'+data[i].item;
                 }
 
-                data[i].child_description =  (data[i].child_description || data[i].child_item);
+                // data[i].child_description = "&nbsp;".repeat(data[i].level) + (data[i].child_description || data[i].child_item);
 
             }
 
