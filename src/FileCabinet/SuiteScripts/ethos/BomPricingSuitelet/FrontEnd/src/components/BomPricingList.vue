@@ -1,20 +1,24 @@
 <script setup lang="ts">
 
 import { BomPricingService }    from "@/service/BomPricingService";
-
 import { ref, onMounted }       from 'vue';
-
 import { FilterMatchMode, FilterOperator }      from 'primevue/api';
 
-let bomPricingService = new BomPricingService();
 
+let bomPricingService = new BomPricingService();
 
 let itemId = ref("");
 
 let bomPricingList = ref();
-let userItemId = '';
+// let userItemId = '';
 
-const filters = ref();
+const filters = ref(); // Filters in DataTable
+
+// Export CSV in DataTable
+const dt = ref();
+const exportCSV = () => {
+    dt.value.exportCSV();
+};
 
 onMounted(() => {
     refreshData();
@@ -67,6 +71,7 @@ initFilters();
     <DataTable v-model:filters="filters" :value="bomPricingList" tableStyle="min-width: 50rem" class="p-datatable-sm" id="bom-list"
                style="font-size: 18px; margin-top: 15px"
                 :globalFilterFields="['child_item']"
+               ref="dt"
     >
         <template #header>
 
@@ -77,10 +82,9 @@ initFilters();
                     <i class="pi pi-search" />
                 </span>
 
-                <!-- <span class="p-input-icon-left">
-                    <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-                    <i class="pi pi-search" />
-                </span> -->
+                <div class="export">
+                    <Button class="export-btn" icon="pi pi-external-link" label="Export" @click="exportCSV()" />
+                </div>
 
                 <!-- <span clas="p-input-icon-left">
                     <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
@@ -117,5 +121,9 @@ initFilters();
 /* p-datatable-thead {
     font-weight: bold !important;
 } */
+
+.export-btn {
+    border: 0;
+}
 
 </style>
