@@ -41,6 +41,10 @@ const initFilters = () => {
     }
 }
 
+const clearFilter = () => {
+    initFilters();
+};
+
 initFilters();
 
 
@@ -92,16 +96,12 @@ initFilters();
                 <span class="p-input-icon-left">
                     <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
                     <i class="pi pi-search" />
+                    <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px" outlined @click="clearFilter()" />
                 </span>
 
                 <div class="export">
                     <Button class="export-btn" icon="pi pi-external-link" label="Export" @click="exportCSV()" />
                 </div>
-
-                <!-- <span clas="p-input-icon-left">
-                    <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-                    <i class="pi pi-search" />
-                </span> -->
 
             </div>
 
