@@ -4,20 +4,17 @@ import { BomPricingService }    from "@/service/BomPricingService";
 
 import { ref, onMounted }       from 'vue';
 
-/* defineProps<{
-    msg: string
-}>(); */
+import { FilterMatchMode, FilterOperator }      from 'primevue/api';
 
 let bomPricingService = new BomPricingService();
 
-/* let cloneText = ref("");
-let targetText = ref("");
-let hasAgreement = ref(false); */
 
 let itemId = ref("");
 
 let bomPricingList = ref();
 let userItemId = '';
+
+const filters = ref();
 
 onMounted(() => {
     refreshData();
@@ -27,14 +24,20 @@ onMounted(() => {
 const refreshData = () => {
     // bomPricingService.retrieveList(cloneText.value, targetText.value, hasAgreement.value).then((data: any) => {
     bomPricingService.retrieveList(itemId.value).then((data: any) => {
-        // debugger;
         bomPricingList.value = data.data;
     })
 }
 
-const log = (value: string) => {
-    console.log(value);
+const initFilters = () => {
+    filters.value = {
+        global : { value : null, matchMode : FilterMatchMode.CONTAINS },
+        child_item : { operator : FilterOperator.AND, constraints: [{ value : null, matchMode : FilterMatchMode.STARTS_WITH}] },
+    }
 }
+
+initFilters();
+
+
 
 
 </script>
@@ -52,7 +55,6 @@ const log = (value: string) => {
 
                     <!-- Search icon -->
                     <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2  border-round">
-                        <!-- <Button icon="pi pi-search" aria-label="Submit" @click="log(itemId)"/> -->
                         <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" />
                     </div>
 
@@ -62,11 +64,34 @@ const log = (value: string) => {
     </div>
 
     <!-- DATA TABLE -->
-    <DataTable :value="bomPricingList" tableStyle="min-width: 50rem" class="p-datatable-sm" style="font-size: 18px; margin-top: 15px">
+    <DataTable v-model:filters="filters" :value="bomPricingList" tableStyle="min-width: 50rem" class="p-datatable-sm" id="bom-list"
+               style="font-size: 18px; margin-top: 15px"
+                :globalFilterFields="['child_item']"
+    >
+        <template #header>
 
-        <!-- <Column field="parentitem" header="Parent Item ID"></Column>
-        <Column field="parent_item" header="Parent Item"></Column>
-        <Column field="parent_description" header="Parent Item ID"></Column> -->
+            <div class="flex justify-content-between">
+
+                <span class="p-input-icon-left">
+                    <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                    <i class="pi pi-search" />
+                </span>
+
+                <!-- <span class="p-input-icon-left">
+                    <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                    <i class="pi pi-search" />
+                </span> -->
+
+                <!-- <span clas="p-input-icon-left">
+                    <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                    <i class="pi pi-search" />
+                </span> -->
+
+            </div>
+
+        </template>
+
+        <!-- <template #empty>No Build of Materials Items Found.</template> -->
 
         <Column field="item" header="Item ID" style="width: 10%"></Column>
         <Column field="child_item" header="Item Part Number" style="width: 22%"></Column>
@@ -74,7 +99,6 @@ const log = (value: string) => {
         <Column field="averagecost" header="Average Cost"></Column>
         <Column field="quantity" header="Qty"></Column>
         <Column field="itemsource" header="Source"></Column>
-        <!-- <Column field="level" header="Level"></Column> -->
 
 
     </DataTable>
@@ -82,8 +106,16 @@ const log = (value: string) => {
 </template>
 
 
+
 <!-- STYLES -->
 <style scoped>
 
+/* #bom-list th {
+    font-weight: bold !important;
+} */
+
+/* p-datatable-thead {
+    font-weight: bold !important;
+} */
 
 </style>
