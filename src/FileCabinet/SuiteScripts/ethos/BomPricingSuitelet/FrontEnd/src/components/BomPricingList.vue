@@ -20,6 +20,8 @@ const exportCSV = () => {
     dt.value.exportCSV();
 };
 
+const packaging = ref('');
+
 onMounted(() => {
     refreshData();
 });
@@ -75,7 +77,17 @@ initFilters();
     >
         <template #header>
 
-            <div class="flex justify-content-between">
+            <div class="flex justify-content-between" style="margin-bottom: 5px;">
+
+                <div class="radio-btns flex align-items-center">
+
+                    <RadioButton v-model="packaging" value="packaging1" />
+                    <label class="ml-2" for="packaging1" style="margin-right: 15px;">Packaging 1</label>
+
+                    <RadioButton v-model="packaging" value="packaging2" />
+                    <label class="ml-2" for="packaging2">Packaging 2</label>
+
+                </div>
 
                 <span class="p-input-icon-left">
                     <InputText v-model="filters['global'].value" placeholder="Keyword Search" />

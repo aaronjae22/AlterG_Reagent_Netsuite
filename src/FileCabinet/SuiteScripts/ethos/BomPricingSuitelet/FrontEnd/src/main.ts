@@ -17,6 +17,7 @@ import 'primeflex/primeflex.css'; // Primeflex
 /* PrimeVue components */
 import Button       from 'primevue/button';
 import InputText    from 'primevue/inputtext';
+import RadioButton  from 'primevue/radiobutton';
 import Checkbox     from "primevue/checkbox";
 import DataTable    from 'primevue/datatable';
 import Column       from 'primevue/column';
@@ -31,6 +32,7 @@ app.use(PrimeVue);
 
 app.component('Button',         Button);
 app.component('InputText',      InputText);
+app.component('RadioButton',    RadioButton);
 app.component('CheckBox',       Checkbox);
 app.component('DataTable',      DataTable);
 app.component('Column',         Column);
