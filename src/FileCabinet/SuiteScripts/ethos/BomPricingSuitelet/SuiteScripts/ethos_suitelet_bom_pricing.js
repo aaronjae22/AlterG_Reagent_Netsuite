@@ -166,6 +166,7 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
             createNodePath(allData);
 
+            calculateChildBasedPrice(allData);
 
             //sor allData by nodePath
             allData.sort(function(a, b){
@@ -193,10 +194,32 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
                     data[i].nodePath = '/'+data[i].item;
                 }
 
-                // data[i].child_description = "&nbsp;".repeat(data[i].level) + (data[i].child_description || data[i].child_item);
-
+                //to display en CSV data in hierarchical way
+                data[i].child_description = "      ".repeat(data[i].level) + (data[i].child_description || data[i].child_item);
             }
+        }
 
+        const calculateChildBasedPrice = (data) =>
+        {
+            //iterate data in reverse order and call getChildren on every ite
+            for(var i = data.length-1; i >=0 ; i--)
+            {
+                let currentItem = data[i];
+                let children = getChildren(data, currentItem.item);
+                let calcCost = 0;
+                if(children && children.length > 0){
+                    //sum cost
+                    children.forEach( i=> calcCost += ( i.averagecost ? i.averagecost : 0 ) )
+                    currentItem.calculatedCost = calcCost;
+                }
+                else
+                    currentItem.calculatedCost = currentItem.averagecost ? currentItem.averagecost : 0;
+            }
+        }
+
+        const getChildren = (data, parentId)=>
+        {
+            return data.filter( i => i.parentitem == parentId);
         }
 
         const manageError = (context) => {
@@ -237,8 +260,6 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
 
             return null;
         }
-
-
         const getQueryByLevel = (level) => {
 
             let level0Query = `WITH levelQuery0 AS (
@@ -251,10 +272,13 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
             let selectQuery = ` select                             
                             l.parentitem, ip.itemid as parent_item, ip.description as parent_description,                              
                             l.item, i.itemid as child_item , i.description as child_description,    
-                            i.averagecost, l.quantity, l.effectivedate, l.obsoletedate, l.itemsource 
+                            i.averagecost, l.quantity, l.effectivedate, l.obsoletedate, l.itemsource,
+                            i.lastpurchaseprice
                             from levelQuery${level} l
                             inner join item i on l.item = i.id
-                            inner join item ip on l.parentitem = ip.id`;
+                            inner join item ip on l.parentitem = ip.id
+                            where l.itemsource = 'STOCK'
+                            `;
 
             let levelQuery = ``;
 

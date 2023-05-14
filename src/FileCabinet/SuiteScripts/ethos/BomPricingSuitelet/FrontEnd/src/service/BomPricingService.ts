@@ -39,14 +39,20 @@ export class BomPricingService extends ServiceBase
 
                 resolve({ data: [
                         {
-                            assembly_item:              'string',
-                            description:                'string',
-                            raw_material_part:          'string',
-                            raw_antibody_supplier:      'string',
-                            supplier_part:              'string',
-                            agreement_date:             'string',
-                            contract_expiration_date:   'string',
-                            memo:                       'string',
+                            "parentitem": 3572,
+                            "parent_item": "AlterG Via 400",
+                            "parent_description": "Via 400 Anti Gravity Treadmill ",
+                            "item": 1160,
+                            "child_item": "105924",
+                            "child_description": "Barrier Bag, AoS M320",
+                            "averagecost": null,
+                            "quantity": 1,
+                            "effectivedate": null,
+                            "obsoletedate": null,
+                            "itemsource": "STOCK",
+                            "level": 0,
+                            "nodePath": "/1160",
+                            isHidden: false
                         },
                     ],
                     success: true,
@@ -73,13 +79,22 @@ export interface BomPricingListRequest extends RequestBase
 
 export interface BomPricingRecord
 {
-    assembly_item_id:           string,
-    assembly_item:              string,
-    description:                string,
-    raw_material_part:          string,
-    raw_antibody_supplier:      string,
-    supplier_part:              string,
-    agreement_date:             string,
-    contract_expiration_date:   string,
-    memo:                       string,
+    "parentitem": number,
+    "parent_item": string,
+    "parent_description": string,
+    "item": number,
+    "child_item": string,
+    "child_description": string,
+    "averagecost": number|null,
+    "quantity": number,
+    "effectivedate": Date|null,
+    "obsoletedate": Date|null,
+    "itemsource": string,
+    "level": number,
+    "nodePath": string,
+
+    isHidden: boolean
+
+
+
 }
