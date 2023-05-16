@@ -75,6 +75,14 @@ const exportCSV = () => {
 };
 
 // Calculate Total Cost
+
+const formatCurrency = (value: number) => {
+
+    if (value == null || value == undefined)
+        return "--"
+    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD'  });
+}
+
 const calculateTotalCost = () => {
 
     hideElementsBaseOnFilters();
@@ -193,7 +201,7 @@ const hideElementsBaseOnFilters = () => {
                 </span>
 
                 <div class="flex">
-                    <h2>Total: {{ totalCost }}</h2>
+                    <h2>Total: {{ formatCurrency(totalCost) }}</h2>
                 </div>
 
                 <div class="export">
@@ -207,8 +215,25 @@ const hideElementsBaseOnFilters = () => {
         <Column field="item" header="Item Id"></Column>
         <Column field="child_item" header="Item Part Number"></Column>
         <Column field="child_description" header="Item Description"></Column>
-        <Column field="averagecost" header="Average Cost"></Column>
-        <Column field="lastpurchaseprice" header="Last Purchase Price"></Column>
+
+        <Column field="averagecost">
+            <template #header>
+                <div>Average Cost</div>
+            </template>
+            <template #body="slotProps">
+                {{ formatCurrency(slotProps.data.averagecost) }}
+            </template>
+        </Column>
+
+        <Column field="lastpurchaseprice">
+            <template #header>
+                <div>Last Purchase Price</div>
+            </template>
+            <template #body="slotProps">
+                {{ formatCurrency(slotProps.data.lastpurchaseprice) }}
+            </template>
+        </Column>
+
         <Column field="quantity" header="Qty"></Column>
         <Column field="level" header="Level"></Column>
 
