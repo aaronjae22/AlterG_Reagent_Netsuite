@@ -112,13 +112,12 @@ const calculateTotalCost = () => {
 
 const hideElementsBaseOnFilters = () => {
 
-    // treeTableList.value.forEach((i) => i.isHidden = false);
+    treeTableList.value.forEach((i) => i.isHidden = false);
 
     let packagingId = 0;
 
     if (packaging.value === 'On Site')
     {
-        console.log(packaging.value);
         packagingId = packagingRollingId;
     }
     else if (packaging.value === 'Rolling')
@@ -173,8 +172,10 @@ const hideElementsBaseOnFilters = () => {
         <ProgressSpinner />
     </div>
 
-    <DataTable :value="treeTableList" v-model:filters="filters" ref="dt"
-               :class="'p-datatable-sm'" tableStyle="min-width: 50rem">
+    <DataTable :value="filteredItems" v-model:filters="filters"
+               :class="'p-datatable-sm'" tableStyle="min-width: 50rem"
+               :globalFilterFields="['child_description']"
+               ref="dt">
 
         <template #header>
 
