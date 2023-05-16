@@ -241,6 +241,15 @@ const hideElementsBaseOnFilters = () => {
             </template>
         </Column>
 
+        <Column field="calculatedCost" style="text-align: right;">
+            <template #header>
+                <div style="text-align: right; width: 100%;">Calc Cost</div>
+            </template>
+            <template #body="slotProps">
+                {{ formatCurrency(slotProps.data.calculatedCost )}}
+            </template>
+        </Column>
+
         <Column field="lastpurchaseprice" style="text-align: right;">
             <template #header>
                 <div style="text-align: right; width: 100%">Last Purchase Price</div>
