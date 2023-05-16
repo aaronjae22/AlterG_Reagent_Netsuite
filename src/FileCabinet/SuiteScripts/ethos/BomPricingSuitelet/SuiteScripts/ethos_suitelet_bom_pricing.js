@@ -123,6 +123,24 @@ define(['N/file', 'N/https', 'N/query', 'N/record', 'N/runtime', 'N/search', 'N/
                     });
                     return;
                 }
+
+                // TREE TABLE
+                if (params.action === 'tree') {
+
+                    let bomItem =  getBomItem(params.itemId);  // AlterG Via 400
+                    const count = bomItem.length;
+                    const remaining = runtime.getCurrentScript().getRemainingUsage();
+                    context.response.write({
+                        output: JSON.stringify({
+                            count: count,
+                            data: bomItem,
+                            remaining: remaining,
+                            assyId: params.itemId
+                        })
+                    });
+                    return;
+                }
+
             }
              // Else retrieve html page
             const form = serverWidget.createForm({title: 'BOM Pricing'});
