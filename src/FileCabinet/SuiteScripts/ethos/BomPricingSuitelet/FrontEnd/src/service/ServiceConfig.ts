@@ -5,7 +5,7 @@ const config: ServiceConfig = {
     SuiteletUrl: '/app/site/hosting/scriptlet.nl?script=801&deploy=1',
 
     isProductionSite: true,
-    useProxy: false,
+    useProxy: true,
 
 };
 
