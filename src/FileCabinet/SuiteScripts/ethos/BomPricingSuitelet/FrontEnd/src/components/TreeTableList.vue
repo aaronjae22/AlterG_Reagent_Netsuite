@@ -15,10 +15,15 @@ import Dropdown         from "primevue/dropdown";
 let treeTableService = new TreeDataService();
 
 let itemId = ref("3572");
+let packaging = ref('');
+let packingList = ref(['On Site', 'Rolling']);
+let barrierBag = ref(false);
+
+// Filter in InputText Search
+const filters = ref();
 
 // Store data from get request
 let treeTableList = ref([] as any[]);
-
 // Store data from local nodes
 let nodes = ref();
 
@@ -40,8 +45,29 @@ const refreshData = () => {
         console.log(error);
         loadingData.value = false;
     })
+};
 
+// Filters
+const initFilters = () => {
+    filters.value = {
+        global : { value : null, matchMode : FilterMatchMode.CONTAINS },
+        child_item : { operator : FilterOperator.AND, constraints: [{ value : null, matchMode : FilterMatchMode.STARTS_WITH}] },
+    }
 }
+
+const clearFilter = () => {
+    initFilters();
+};
+
+initFilters();
+
+// Export CSV
+const dt = ref();
+
+const exportCSV = () => {
+    dt.value.exportCSV();
+};
+
 
 </script>
 
@@ -74,7 +100,44 @@ const refreshData = () => {
         <ProgressSpinner />
     </div>
 
-    <DataTable :value="treeTableList">
+    <DataTable :value="treeTableList" v-model:filters="filters" ref="dt" tableStyle="min-width: 50rem">
+
+        <template #header>
+            <div class="flex justify-content-between" style="margin-bottom: 10px;">
+
+                <InputText v-model="itemId" placeholder="Enter Item ID" />
+
+                <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2 border-round">
+                    <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" />
+                </div>
+
+                <Dropdown v-model="packaging" :options="packingList"
+                            placeholder="Select a Packing" class="w-full md:w-14rem"
+                />
+
+                <div class="flex align-items-center">
+                    <label for="barrierBagInput" class="ml-2">Use Barrier Bag?</label>
+                    &nbsp;
+                    <Checkbox id="barrierBagInput" v-model="barrierBag" :binary="true" />
+                </div>
+
+                <span class="p-input-icon-left">
+                    <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                    <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px;" outlined @click="clearFilter()" />
+                </span>
+
+                <div class="flex">
+                    <h2>Total: $000.000</h2>
+                </div>
+
+                <div class="export">
+                    <Button class="export-btn" icon="pi pi-external-link" label="Export" @click="exportCSV()" />
+                </div>
+
+            </div>
+
+        </template>
+
         <Column field="item" header="Item Id"></Column>
         <Column field="child_item" header="Item Part Number"></Column>
         <Column field="child_description" header="Item Description"></Column>
@@ -82,6 +145,7 @@ const refreshData = () => {
         <Column field="lastpurchaseprice" header="Last Purchase Price"></Column>
         <Column field="quantity" header="Qty"></Column>
         <Column field="level" header="Level"></Column>
+
     </DataTable>
 
 </template>
