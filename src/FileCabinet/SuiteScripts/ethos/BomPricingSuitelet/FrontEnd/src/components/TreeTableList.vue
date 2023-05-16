@@ -15,17 +15,25 @@ import Dropdown         from "primevue/dropdown";
 let treeTableService = new TreeDataService();
 
 let itemId = ref("3572");
+
 let packaging = ref('');
 let packingList = ref(['On Site', 'Rolling']);
+let packagingOnSiteId = 1301;
+let packagingRollingId = 1303;
+
 let barrierBag = ref(false);
+let barrierBagCodes = [1160, 1161];
 
-// Filter in InputText Search
-const filters = ref();
+let totalCost = 0;
 
-// Store data from get request
-let treeTableList = ref([] as any[]);
-// Store data from local nodes
-let nodes = ref();
+const dt = ref(); // Export CSV
+
+const filters = ref(); // Filter in InputText Search
+
+let treeTableList = ref([] as any[]); // Store data from get request
+let filteredItems = ref([] as any[]);
+
+let nodes = ref(); // Store data from local nodes
 
 let loadingData = ref(false);
 
@@ -41,6 +49,7 @@ const refreshData = () => {
     treeTableService.retrieveList(itemId.value).then((data: any) => {
         treeTableList.value = data.data;
         loadingData.value = false;
+        calculateTotalCost();
     }).catch((error: any) => {
         console.log(error);
         loadingData.value = false;
@@ -61,12 +70,68 @@ const clearFilter = () => {
 
 initFilters();
 
-// Export CSV
-const dt = ref();
-
 const exportCSV = () => {
     dt.value.exportCSV();
 };
+
+// Calculate Total Cost
+const calculateTotalCost = () => {
+
+    hideElementsBaseOnFilters();
+
+    let total = 0;
+
+    if (treeTableList.value == null || treeTableList.value == undefined || treeTableList.value.length == 0) {
+        return total;
+    }
+
+    treeTableList.value.forEach((item : any) => {
+
+        if (item.isHidden) {
+            return;
+        }
+
+        total += item.lastpurchaseprice; // item.calculatedCost;
+
+    });
+
+    filteredItems.value = treeTableList.value.filter(i => !i.isHidden);
+    totalCost = total;
+
+    return total;
+
+};
+
+const hideElementsBaseOnFilters = () => {
+
+    // treeTableList.value.forEach((i) => i.isHidden = false);
+
+    let packagingId = 0;
+
+    if (packaging.value === 'On Site')
+    {
+        console.log(packaging.value);
+        packagingId = packagingRollingId;
+    }
+    else if (packaging.value === 'Rolling')
+    {
+        packagingId = packagingOnSiteId;
+    }
+
+    if (!barrierBag.value)
+    {
+        treeTableList.value.filter((i) => {
+            return barrierBagCodes.includes(i.item);
+        }).forEach((i: any) => i.isHidden = true);
+    }
+
+    treeTableList.value.filter((i) => {
+        return i.nodePath.startsWith("/" + packagingId + "/") ||
+            i.nodePath === "/" + packagingId;
+    }).forEach((i : any) => i.isHidden = true);
+
+
+}
 
 
 </script>
@@ -79,7 +144,7 @@ const exportCSV = () => {
         <h1 class="header-text" style="margin:10px">Tree Table</h1>
     </div>
 
-    <!-- DATA TABLE -->
+    <!-- TREE TABLE -->
     <!-- TODO: CHANGED IT TO TREETABLE -->
     <div class="card">
         <TreeTable :value="nodes">
@@ -112,13 +177,14 @@ const exportCSV = () => {
                 </div>
 
                 <Dropdown v-model="packaging" :options="packingList"
-                            placeholder="Select a Packing" class="w-full md:w-14rem"
+                          @change="calculateTotalCost()"
+                          placeholder="Select a Packing" class="w-full md:w-14rem"
                 />
 
                 <div class="flex align-items-center">
                     <label for="barrierBagInput" class="ml-2">Use Barrier Bag?</label>
                     &nbsp;
-                    <Checkbox id="barrierBagInput" v-model="barrierBag" :binary="true" />
+                    <Checkbox id="barrierBagInput" v-model="barrierBag" @change="calculateTotalCost()" :binary="true" />
                 </div>
 
                 <span class="p-input-icon-left">
@@ -127,7 +193,7 @@ const exportCSV = () => {
                 </span>
 
                 <div class="flex">
-                    <h2>Total: $000.000</h2>
+                    <h2>Total: {{ totalCost }}</h2>
                 </div>
 
                 <div class="export">
