@@ -40,7 +40,7 @@ let loadingData = ref(false);
 
 onMounted(() => {
     NodeService.getTreeTableNodes().then((data) => (nodes.value = data));
-    refreshData();
+    // refreshData();
 });
 
 const refreshData = () => {
@@ -155,6 +155,53 @@ const hideElementsBaseOnFilters = () => {
     <!-- TODO: CHANGED IT TO TREETABLE -->
     <div class="card">
         <TreeTable :value="nodes">
+
+            <template #header>
+                <div class="flex justify-content-between" style="margin-bottom: 10px;">
+
+                    <!-- INPUT TEXT SEARCH ITEM -->
+                    <InputText v-model="itemId" plceholder="Enter Item Id" />
+
+                    <!-- SEARCH ICON -->
+                    <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2 border-round">
+                        <Button icon="pi pi-search" aria-label="Submit" />
+                    </div>
+
+                    <!-- DROPDOWN TO SELECT PACKAGING -->
+                    <Dropdown v-model="packaging" :options="packingList"
+                              placeholder="Select a Packing"
+                              class="w-fulll md:w-14rem"
+                    />
+
+                    <!-- CHECKBOX FOR BARRIER BAG SELECTION -->
+                    <div class="flex align-items-center">
+                        <label for="barrierBagInput" class="ml-2">Use Barrier Bag?</label>
+                        &nbsp;
+                        <Checkbox id="barierBagInput" v-model="barrierBag" :binary="true" />
+                    </div>
+
+                    <!-- KEYWORD SEARCH AND CLEAR BUTTON -->
+                    <span class="p-input-icon-left">
+                        <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                        <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px;" outlined />
+                    </span>
+
+                    <!-- TOTAL AMOUNT -->
+                    <div class="flex">
+                        <h2>Total: {{formatCurrency(totalCost)}} </h2>
+                    </div>
+
+                    <!-- EXPORT BUTTON -->
+                    <div class="export">
+                        <Button class="export-btn" icon="pi pi-external-link" label="Export" />
+                    </div>
+
+                </div>
+            </template>
+
+
+
+
             <Column field="item" header="Item" expander></Column>
             <Column field="itempart" header="Item Part Number"></Column>
             <Column field="itemdescription" header="Item Description" />
