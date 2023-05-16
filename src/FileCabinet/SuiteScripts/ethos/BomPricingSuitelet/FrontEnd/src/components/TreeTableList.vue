@@ -19,7 +19,11 @@ let itemId = ref("3572");
 // Store data from get request
 let treeTableList = ref([] as any[]);
 
+// Store data from local nodes
 let nodes = ref();
+
+let loadingData = ref(false);
+
 
 onMounted(() => {
     NodeService.getTreeTableNodes().then((data) => (nodes.value = data));
@@ -27,12 +31,14 @@ onMounted(() => {
 });
 
 const refreshData = () => {
-    // TODO: ADD LOADING DATA => SPINNER
+    loadingData.value = true;
 
     treeTableService.retrieveList(itemId.value).then((data: any) => {
         treeTableList.value = data.data;
+        loadingData.value = false;
     }).catch((error: any) => {
         console.log(error);
+        loadingData.value = false;
     })
 
 }
@@ -64,6 +70,10 @@ const refreshData = () => {
         <h1 class="header-text">DataTable</h1>
     </div>
 
+    <div v-if="loadingData" class="spinner-container">
+        <ProgressSpinner />
+    </div>
+
     <DataTable :value="treeTableList">
         <Column field="item" header="Item Id"></Column>
         <Column field="child_item" header="Item Part Number"></Column>
@@ -79,6 +89,15 @@ const refreshData = () => {
 
 <!-- STYLE -->
 <style scoped>
+
+
+.spinner-container {
+    display: inline;
+    position: fixed;
+    right: 0;
+    z-index: 999;
+    bottom: 0;
+}
 
 
 </style>
