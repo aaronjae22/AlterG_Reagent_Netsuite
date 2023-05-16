@@ -173,37 +173,46 @@ const hideElementsBaseOnFilters = () => {
         <ProgressSpinner />
     </div>
 
-    <DataTable :value="treeTableList" v-model:filters="filters" ref="dt" tableStyle="min-width: 50rem">
+    <DataTable :value="treeTableList" v-model:filters="filters" ref="dt"
+               :class="'p-datatable-sm'" tableStyle="min-width: 50rem">
 
         <template #header>
+
             <div class="flex justify-content-between" style="margin-bottom: 10px;">
 
+                <!-- INPUT TEXT SEARCH ITEM -->
                 <InputText v-model="itemId" placeholder="Enter Item ID" />
 
+                <!-- SEARCH ICON -->
                 <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2 border-round">
                     <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" />
                 </div>
 
+                <!-- DROPDOWN TO SELECT PACKAGING -->
                 <Dropdown v-model="packaging" :options="packingList"
                           @change="calculateTotalCost()"
                           placeholder="Select a Packing" class="w-full md:w-14rem"
                 />
 
+                <!-- CHECKBOX FOR BARRIER BAG SELECTION -->
                 <div class="flex align-items-center">
                     <label for="barrierBagInput" class="ml-2">Use Barrier Bag?</label>
                     &nbsp;
                     <Checkbox id="barrierBagInput" v-model="barrierBag" @change="calculateTotalCost()" :binary="true" />
                 </div>
 
+                <!-- KEYWORD SEARCH AND CLEAR BUTTON -->
                 <span class="p-input-icon-left">
                     <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
                     <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px;" outlined @click="clearFilter()" />
                 </span>
 
+                <!-- TOTAL AMOUNT -->
                 <div class="flex">
                     <h2>Total: {{ formatCurrency(totalCost) }}</h2>
                 </div>
 
+                <!-- EXPORT BUTTON -->
                 <div class="export">
                     <Button class="export-btn" icon="pi pi-external-link" label="Export" @click="exportCSV()" />
                 </div>
@@ -212,11 +221,17 @@ const hideElementsBaseOnFilters = () => {
 
         </template>
 
-        <Column field="item" header="Item Id"></Column>
+        <Column field="item" header="Item Id" style="width: 5%"></Column>
         <Column field="child_item" header="Item Part Number"></Column>
-        <Column field="child_description" header="Item Description"></Column>
+        <Column field="child_description" header="Item Description">
+            <template #body="slotProps">
+                <span v-if="slotProps.data.child_description" :style="'padding-left: ' + (slotProps.data.level * 30) + 'px'  ">
+                    {{  slotProps.data.child_description }}
+                </span>
+            </template>
+        </Column>
 
-        <Column field="averagecost">
+        <Column field="averagecost" style="text-align: right;">
             <template #header>
                 <div>Average Cost</div>
             </template>
@@ -225,17 +240,32 @@ const hideElementsBaseOnFilters = () => {
             </template>
         </Column>
 
-        <Column field="lastpurchaseprice">
+        <Column field="lastpurchaseprice" style="text-align: right;">
             <template #header>
-                <div>Last Purchase Price</div>
+                <div style="text-align: right; width: 100%">Last Purchase Price</div>
             </template>
             <template #body="slotProps">
                 {{ formatCurrency(slotProps.data.lastpurchaseprice) }}
             </template>
         </Column>
 
-        <Column field="quantity" header="Qty"></Column>
-        <Column field="level" header="Level"></Column>
+        <Column field="quantity" style="text-align: right">
+            <template #header>
+                <div style="text-align: right; width: 100%;">Qty</div>
+            </template>
+            <template #body="slotProps">
+                {{ slotProps.data.quantity }}
+            </template>
+        </Column>
+
+        <Column field="level" style="text-align: right">
+            <template #header>
+                <div style="text-align: right; width: 100%;">Level</div>
+            </template>
+            <template #body="slotProps">
+                {{ slotProps.data.level }}
+            </template>
+        </Column>
 
     </DataTable>
 
