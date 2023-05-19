@@ -27,8 +27,6 @@ let barrierBagCodes = [1160, 1161];
 
 let totalCost = 0;
 
-const dt = ref(); // Export CSV
-
 const filters = ref(); // Filter in InputText Search
 
 let treeTableList = ref([] as any[]); // Store data from get request
@@ -60,7 +58,7 @@ const refreshData = () => {
   service.retrieveTree(itemId.value).then((data: any) => {
 
     treeTableList.value = data.root;
-    debugger;
+    // debugger;
     loadingData.value = false;
     calculateTotalCost();
   }).catch((error: any) => {
@@ -83,6 +81,8 @@ const clearFilter = () => {
 };
 
 initFilters();
+
+const dt = ref(); // Export CSV
 
 const exportCSV = () => {
     dt.value.exportCSV();
@@ -107,15 +107,23 @@ const calculateTotalCost = () => {
         return total;
     }
 
+
+
     treeTableList.value.forEach((item : any) => {
+
+        console.log(item);
+        console.log(item.data);
+        console.log(item.data.lastpurchaseprice);
 
         if (item.isHidden) {
             return;
         }
 
-        total += item.lastpurchaseprice; // item.calculatedCost;
+        total += item.data.lastpurchaseprice; // item.calculatedCost;
 
     });
+
+
 
     filteredItems.value = treeTableList.value.filter(i => !i.isHidden);
     totalCost = total;
@@ -123,6 +131,9 @@ const calculateTotalCost = () => {
     return total;
 
 };
+
+
+
 
 const hideElementsBaseOnFilters = () => {
 
@@ -161,28 +172,33 @@ const hideElementsBaseOnFilters = () => {
 <!-- TEMPLATE -->
 <template>
 
-    <div class="header">
-        <h1 class="header-text" style="margin:10px">Tree Table</h1>
+    <div v-if="loadingData" class="spinner-container">
+        <ProgressSpinner />
     </div>
 
-    <!-- TREE TABLE -->
-    <!-- TODO: CHANGED IT TO TREETABLE -->
-    <div class="card">
-        <TreeTable :value="treeTableList" key="item" data >
+    <!-- TODO: ADD FILTERS -->
+
+        <TreeTable :value="treeTableList"
+                   :class="`p-treetable-sm`"
+                   :tableProps="{ style: { minWidth: '50rem' } }"
+                   :globalFilterFields="['child_description']"
+                   key="item" ref="dt" id="bom-list">
 
             <template #header>
-                <div class="flex justify-content-between" style="margin-bottom: 10px;">
+
+                <div class="flex justify-content-between" style="margin-bottom: 0px;">
 
                     <!-- INPUT TEXT SEARCH ITEM -->
-                    <InputText v-model="itemId" plceholder="Enter Item Id" />
+                    <InputText v-model="itemId" placeholder="Enter Item Id" />
 
                     <!-- SEARCH ICON -->
                     <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2 border-round">
-                        <Button icon="pi pi-search" aria-label="Submit" />
+                        <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" />
                     </div>
 
                     <!-- DROPDOWN TO SELECT PACKAGING -->
                     <Dropdown v-model="packaging" :options="packingList"
+                              @change="calculateTotalCost()"
                               placeholder="Select a Packing"
                               class="w-fulll md:w-14rem"
                     />
@@ -197,7 +213,7 @@ const hideElementsBaseOnFilters = () => {
                     <!-- KEYWORD SEARCH AND CLEAR BUTTON -->
                     <span class="p-input-icon-left">
                         <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-                        <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px;" outlined />
+                        <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px;" outlined @click="clearFilter()" />
                     </span>
 
                     <!-- TOTAL AMOUNT -->
@@ -206,136 +222,65 @@ const hideElementsBaseOnFilters = () => {
                     </div>
 
                     <!-- EXPORT BUTTON -->
+                    <!-- TODO: FIX@click="exportCSV()" -->
                     <div class="export">
                         <Button class="export-btn" icon="pi pi-external-link" label="Export" />
                     </div>
 
                 </div>
             </template>
+            <Column field="item" header="Item ID" expander headerStyle="width: 16rem" style="font-weight:bold"></Column>
+            <Column field="child_item" header="Item Part Number" headerStyle="width: 24rem"></Column>
+            <Column field="child_description" header="Item Description" headerStyle="width: 20rem"></Column>
 
-            <Column field="item" header="Item" expander></Column>
-            <Column field="child_item" header="Item Part Number"></Column>
-            <Column field="child_description" header="Item Description" />
-            <Column field="averagecost" header="Average Cost" />
-            <Column field="quantity" header="Qty" />
-            <Column field="level" header="Level" />
+            <Column field="averagecost" style="text-align: right">
+                <template #header>
+                    <div style="text-align: right; width: 100%">Average Cost</div>
+                </template>
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.node.data.averagecost) }}
+                </template>
+            </Column>
+
+            <Column field="calculatedCost" style="text-align: right" headerStyle="width: 7rem">
+                <template #header>
+                    <div style="text-align: right; width: 100% ">Calc Cost</div>
+                </template>
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.node.data.calculatedCost) }}
+                </template>
+            </Column>
+
+            <Column field="lastpurchaseprice" style="text-align: right;" headerStyle="width: 10rem">
+                <template #header>
+                    <div style="text-align: right; width: 100%">Last Purchase Price</div>
+                </template>
+                <template #body="slotProps">
+                    {{ formatCurrency(slotProps.node.data.lastpurchaseprice) }}
+                </template>
+            </Column>
+
+            <Column field="quantity" style="text-align: right;" headerStyle="width: 3rem">
+                <template #header>
+                    <div style="text-align: right;">Qty</div>
+                </template>
+                <template #body="slotProps">
+                    {{ slotProps.node.data.quantity }}
+                </template>
+            </Column>
+
+            <Column field="level" style="text-align: right" headerStyle="width: 3rem">
+                <template #header>
+                    <div style="text-align: left;">Level</div>
+                </template>
+                <template #body="slotProps">
+                    {{ slotProps.node.data.level }}
+                </template>
+            </Column>
+
+
         </TreeTable>
-    </div>
 
-    <div class="header" style="margin: 10px;">
-        <h1 class="header-text">DataTable</h1>
-    </div>
-
-    <div v-if="loadingData" class="spinner-container">
-        <ProgressSpinner />
-    </div>
-
-    <DataTable :value="filteredItems" v-model:filters="filters"
-               :class="'p-datatable-sm'" tableStyle="min-width: 50rem"
-               :globalFilterFields="['child_description']"
-               ref="dt">
-
-        <template #header>
-
-            <div class="flex justify-content-between" style="margin-bottom: 10px;">
-
-                <!-- INPUT TEXT SEARCH ITEM -->
-                <InputText v-model="itemId" placeholder="Enter Item ID" />
-
-                <!-- SEARCH ICON -->
-                <div class="flex-initial flex align-items-center justify-content-center font-bold text-white m-2 border-round">
-                    <Button icon="pi pi-search" aria-label="Submit" @click="refreshData" />
-                </div>
-
-                <!-- DROPDOWN TO SELECT PACKAGING -->
-                <Dropdown v-model="packaging" :options="packingList"
-                          @change="calculateTotalCost()"
-                          placeholder="Select a Packing" class="w-full md:w-14rem"
-                />
-
-                <!-- CHECKBOX FOR BARRIER BAG SELECTION -->
-                <div class="flex align-items-center">
-                    <label for="barrierBagInput" class="ml-2">Use Barrier Bag?</label>
-                    &nbsp;
-                    <Checkbox id="barrierBagInput" v-model="barrierBag" @change="calculateTotalCost()" :binary="true" />
-                </div>
-
-                <!-- KEYWORD SEARCH AND CLEAR BUTTON -->
-                <span class="p-input-icon-left">
-                    <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
-                    <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px;" outlined @click="clearFilter()" />
-                </span>
-
-                <!-- TOTAL AMOUNT -->
-                <div class="flex">
-                    <h2>Total: {{ formatCurrency(totalCost) }}</h2>
-                </div>
-
-                <!-- EXPORT BUTTON -->
-                <div class="export">
-                    <Button class="export-btn" icon="pi pi-external-link" label="Export" @click="exportCSV()" />
-                </div>
-
-            </div>
-
-        </template>
-
-        <Column field="item" header="Item Id" style="width: 5%"></Column>
-        <Column field="child_item" header="Item Part Number"></Column>
-        <Column field="child_description" header="Item Description">
-            <template #body="slotProps">
-                <span v-if="slotProps.data.child_description" :style="'padding-left: ' + (slotProps.data.level * 30) + 'px'  ">
-                    {{  slotProps.data.child_description }}
-                </span>
-            </template>
-        </Column>
-
-        <Column field="averagecost" style="text-align: right;">
-            <template #header>
-                <div>Average Cost</div>
-            </template>
-            <template #body="slotProps">
-                {{ formatCurrency(slotProps.data.averagecost) }}
-            </template>
-        </Column>
-
-        <Column field="calculatedCost" style="text-align: right;">
-            <template #header>
-                <div style="text-align: right; width: 100%;">Calc Cost</div>
-            </template>
-            <template #body="slotProps">
-                {{ formatCurrency(slotProps.data.calculatedCost )}}
-            </template>
-        </Column>
-
-        <Column field="lastpurchaseprice" style="text-align: right;">
-            <template #header>
-                <div style="text-align: right; width: 100%">Last Purchase Price</div>
-            </template>
-            <template #body="slotProps">
-                {{ formatCurrency(slotProps.data.lastpurchaseprice) }}
-            </template>
-        </Column>
-
-        <Column field="quantity" style="text-align: right">
-            <template #header>
-                <div style="text-align: right; width: 100%;">Qty</div>
-            </template>
-            <template #body="slotProps">
-                {{ slotProps.data.quantity }}
-            </template>
-        </Column>
-
-        <Column field="level" style="text-align: right">
-            <template #header>
-                <div style="text-align: right; width: 100%;">Level</div>
-            </template>
-            <template #body="slotProps">
-                {{ slotProps.data.level }}
-            </template>
-        </Column>
-
-    </DataTable>
 
 </template>
 
@@ -352,5 +297,8 @@ const hideElementsBaseOnFilters = () => {
     bottom: 0;
 }
 
+.export-btn {
+    border: 0;
+}
 
 </style>
