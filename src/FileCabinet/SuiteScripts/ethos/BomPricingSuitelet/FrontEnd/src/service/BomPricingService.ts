@@ -68,6 +68,58 @@ export class BomPricingService extends ServiceBase
 
     }
 
+
+    retrieveTree(itemId: string) : Promise<BomPricingTreeRequest>
+    {
+
+        return this.retrieveList(itemId).then((response) => {
+            let promise = new Promise<BomPricingTreeRequest>((resolve, reject) => {
+
+                resolve( this.transformListToTree(response.data) );
+
+            });
+            return promise;
+        });
+    }
+    transformListToTree(list: BomPricingRecord[]) : BomPricingTreeRequest
+    {
+        let request: BomPricingTreeRequest = {
+            success: true,
+            message: 'OK',
+            count: list.length,
+            remaining: 1000,
+            root: list.filter( (item) => item.level == 0)
+                .map( (item) => this.getNodeFromRecord(item, list) )
+        } ;
+
+        return  request;
+    }
+
+    getNodeFromRecord(record: BomPricingRecord, allData: BomPricingRecord[]) : BomPricingRecordNode
+    {
+        let node : BomPricingRecordNode = {
+            key: record.item,
+            data: {
+                parentitem: record.parentitem,
+                parent_item: record.parent_item,
+                parent_description: record.parent_description,
+                item: record.item,
+                child_item: record.child_item,
+                child_description: record.child_description,
+                averagecost: record.averagecost,
+                quantity: record.quantity,
+                effectivedate: record.effectivedate,
+                obsoletedate: record.obsoletedate,
+                itemsource: record.itemsource,
+                level: record.level,
+                nodePath: record.nodePath,
+                isHidden: record.isHidden,
+            },
+            children: allData.filter( (item) => item.parentitem == record.item)
+                .map( (item) => this.getNodeFromRecord(item, allData) )
+        }
+        return node;
+    }
 }
 
 
@@ -76,6 +128,16 @@ export interface BomPricingListRequest extends RequestBase
     data: BomPricingRecord[]
 }
 
+export interface BomPricingTreeRequest extends RequestBase
+{
+    root: BomPricingRecordNode[]
+}
+export interface  BomPricingRecordNode
+{
+    key: number,
+    data: BomPricingRecord,
+    children: BomPricingRecordNode[]
+}
 
 export interface BomPricingRecord
 {
@@ -94,7 +156,4 @@ export interface BomPricingRecord
     "nodePath": string,
 
     isHidden: boolean
-
-
-
 }

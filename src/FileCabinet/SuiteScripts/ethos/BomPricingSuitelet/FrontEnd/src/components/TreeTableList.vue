@@ -10,6 +10,7 @@ import { FilterMatchMode, FilterOperator } from 'primevue/api';
 import ProgressSpinner  from "primevue/progressspinner";
 import Checkbox         from "primevue/checkbox";
 import Dropdown         from "primevue/dropdown";
+import {BomPricingService} from "@/service/BomPricingService";
 
 
 let treeTableService = new TreeDataService();
@@ -39,21 +40,34 @@ let loadingData = ref(false);
 
 
 onMounted(() => {
-    NodeService.getTreeTableNodes().then((data) => (nodes.value = data));
-    // refreshData();
+    //NodeService.getTreeTableNodes().then((data) => (nodes.value = data));
+     refreshData();
 });
 
 const refreshData = () => {
     loadingData.value = true;
 
-    treeTableService.retrieveList(itemId.value).then((data: any) => {
+    /*treeTableService.retrieveList(itemId.value).then((data: any) => {
         treeTableList.value = data.data;
         loadingData.value = false;
         calculateTotalCost();
     }).catch((error: any) => {
         console.log(error);
         loadingData.value = false;
-    })
+    })*/
+  let service = new BomPricingService();
+
+  service.retrieveTree(itemId.value).then((data: any) => {
+
+    treeTableList.value = data.root;
+    debugger;
+    loadingData.value = false;
+    calculateTotalCost();
+  }).catch((error: any) => {
+    console.log(error);
+    loadingData.value = false;
+  });
+
 };
 
 // Filters
@@ -133,9 +147,9 @@ const hideElementsBaseOnFilters = () => {
     }
 
     treeTableList.value.filter((i) => {
-        return i.nodePath.startsWith("/" + packagingId + "/") ||
-            i.nodePath === "/" + packagingId;
-    }).forEach((i : any) => i.isHidden = true);
+        return i.data.nodePath.startsWith("/" + packagingId + "/") ||
+            i.data.nodePath === "/" + packagingId;
+    }).forEach((i : any) => i.data.isHidden = true);
 
 
 }
@@ -154,7 +168,7 @@ const hideElementsBaseOnFilters = () => {
     <!-- TREE TABLE -->
     <!-- TODO: CHANGED IT TO TREETABLE -->
     <div class="card">
-        <TreeTable :value="nodes">
+        <TreeTable :value="treeTableList" key="item" data >
 
             <template #header>
                 <div class="flex justify-content-between" style="margin-bottom: 10px;">
@@ -199,14 +213,11 @@ const hideElementsBaseOnFilters = () => {
                 </div>
             </template>
 
-
-
-
             <Column field="item" header="Item" expander></Column>
-            <Column field="itempart" header="Item Part Number"></Column>
-            <Column field="itemdescription" header="Item Description" />
+            <Column field="child_item" header="Item Part Number"></Column>
+            <Column field="child_description" header="Item Description" />
             <Column field="averagecost" header="Average Cost" />
-            <Column field="qty" header="Qty" />
+            <Column field="quantity" header="Qty" />
             <Column field="level" header="Level" />
         </TreeTable>
     </div>
