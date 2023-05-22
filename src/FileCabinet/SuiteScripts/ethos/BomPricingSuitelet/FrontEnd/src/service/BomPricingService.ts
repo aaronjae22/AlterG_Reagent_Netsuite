@@ -12,12 +12,8 @@ export class BomPricingService extends ServiceBase
     retrieveList(itemId: string) : Promise<BomPricingListRequest>
     {
         const params = {
-            // action: 'retrieveBomPricingList',
             action: 'BomItem',
             itemId: itemId,
-            /* clone: clone,
-            target: target,
-            hasAgreement: hasAgreement, */
         } as any;
 
         const queryString = Object.keys(params).map(key => key  + '=' + params[key]).join('&');
@@ -73,21 +69,34 @@ export class BomPricingService extends ServiceBase
     {
 
         return this.retrieveList(itemId).then((response) => {
+
             let promise = new Promise<BomPricingTreeRequest>((resolve, reject) => {
 
-                resolve( this.transformListToTree(response.data) );
+
+                resolve(this.transformListToTree(response.data) );
+
+                // console.log(response.data);
+                // this.originalItemList = response.data;
 
             });
+
+            // this.retrieveOriginalList(response.data);
+            // console.log(promise);
             return promise;
         });
+
     }
+
     transformListToTree(list: BomPricingRecord[]) : BomPricingTreeRequest
     {
+
         let request: BomPricingTreeRequest = {
             success: true,
             message: 'OK',
             count: list.length,
             remaining: 1000,
+            // originalList: 'OK',
+            originalList: list,
             root: list.filter( (item) => item.level == 0)
                 .map( (item) => this.getNodeFromRecord(item, list) )
         } ;
@@ -133,6 +142,7 @@ export interface BomPricingListRequest extends RequestBase
 export interface BomPricingTreeRequest extends RequestBase
 {
     root: BomPricingRecordNode[]
+    originalList: any,
 }
 export interface  BomPricingRecordNode
 {

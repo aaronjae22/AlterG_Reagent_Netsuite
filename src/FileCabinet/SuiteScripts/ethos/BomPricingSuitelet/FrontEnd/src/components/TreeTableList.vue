@@ -30,6 +30,7 @@ let totalCost = 0;
 const filters = ref(); // Filter in InputText Search
 
 let treeTableList = ref([] as any[]); // Store data from get request
+let originalItemList = ref([] as any[]);
 let filteredItems = ref([] as any[]);
 
 let nodes = ref(); // Store data from local nodes
@@ -53,18 +54,23 @@ const refreshData = () => {
         console.log(error);
         loadingData.value = false;
     })*/
-  let service = new BomPricingService();
 
-  service.retrieveTree(itemId.value).then((data: any) => {
+    let service = new BomPricingService();
 
-    treeTableList.value = data.root;
-    // debugger;
-    loadingData.value = false;
-    calculateTotalCost();
-  }).catch((error: any) => {
-    console.log(error);
-    loadingData.value = false;
-  });
+    service.retrieveTree(itemId.value).then((data: any) => {
+
+        console.log(data);
+        console.log(data.originalList);
+
+        originalItemList.value = data.originalList;
+        treeTableList.value = data.root;
+        loadingData.value = false;
+        calculateTotalCost();
+
+    }).catch((error: any) => {
+        console.log(error);
+        loadingData.value = false;
+    });
 
 };
 
@@ -101,43 +107,39 @@ const calculateTotalCost = () => {
 
     hideElementsBaseOnFilters();
 
+    console.log(originalItemList.value);
+
     let total = 0;
 
-    if (treeTableList.value == null || treeTableList.value == undefined || treeTableList.value.length == 0) {
+    if (originalItemList.value == null || originalItemList.value == undefined || originalItemList.value.length == 0) {
+
         return total;
+
     }
 
-
-
-    treeTableList.value.forEach((item : any) => {
-
-        console.log(item);
-        console.log(item.data);
-        console.log(item.data.lastpurchaseprice);
-
+    originalItemList.value.forEach((item : any) => {
         if (item.isHidden) {
             return;
         }
 
-        total += item.data.lastpurchaseprice; // item.calculatedCost;
+        total += item.lastpurchaseprice;
 
     });
 
+    filteredItems.value = originalItemList.value.filter(i => !i.isHidden);
 
-
-    filteredItems.value = treeTableList.value.filter(i => !i.isHidden);
     totalCost = total;
-
+    console.log(totalCost);
     return total;
+
 
 };
 
 
 
-
 const hideElementsBaseOnFilters = () => {
 
-    treeTableList.value.forEach((i) => i.isHidden = false);
+    originalItemList.value.forEach((i) => i.isHidden = false);
 
     let packagingId = 0;
 
@@ -150,17 +152,25 @@ const hideElementsBaseOnFilters = () => {
         packagingId = packagingOnSiteId;
     }
 
+
     if (!barrierBag.value)
     {
-        treeTableList.value.filter((i) => {
+        originalItemList.value.filter((i) => {
             return barrierBagCodes.includes(i.item);
         }).forEach((i: any) => i.isHidden = true);
     }
 
-    treeTableList.value.filter((i) => {
+    originalItemList.value.filter( (i) =>
+    {
+        return i.nodePath.startsWith("/"+ packagingId+"/" ) ||
+            i.nodePath === "/"+packagingId;
+    }).forEach( (i: any) => i.isHidden = true);
+
+
+    /* treeTableList.value.filter((i) => {
         return i.data.nodePath.startsWith("/" + packagingId + "/") ||
             i.data.nodePath === "/" + packagingId;
-    }).forEach((i : any) => i.data.isHidden = true);
+    }).forEach((i : any) => i.data.isHidden = true); */
 
 
 }
@@ -207,7 +217,7 @@ const hideElementsBaseOnFilters = () => {
                     <div class="flex align-items-center">
                         <label for="barrierBagInput" class="ml-2">Use Barrier Bag?</label>
                         &nbsp;
-                        <Checkbox id="barierBagInput" v-model="barrierBag" :binary="true" />
+                        <Checkbox id="barierBagInput" v-model="barrierBag" @change="calculateTotalCost()" :binary="true" />
                     </div>
 
                     <!-- KEYWORD SEARCH AND CLEAR BUTTON -->
@@ -224,7 +234,7 @@ const hideElementsBaseOnFilters = () => {
                     <!-- EXPORT BUTTON -->
                     <!-- TODO: FIX@click="exportCSV()" -->
                     <div class="export">
-                        <Button class="export-btn" icon="pi pi-external-link" label="Export" />
+                        <Button class="export-btn" icon="pi pi-external-link" label="Export" @click="exportCSV()" />
                     </div>
 
                 </div>
