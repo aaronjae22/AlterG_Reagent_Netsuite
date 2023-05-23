@@ -12,7 +12,6 @@ import Checkbox         from "primevue/checkbox";
 import Dropdown         from "primevue/dropdown";
 import {BomPricingService} from "@/service/BomPricingService";
 
-
 let treeTableService = new TreeDataService();
 
 let itemId = ref("3572");
@@ -27,7 +26,9 @@ let barrierBagCodes = [1160, 1161];
 
 let totalCost = 0;
 
-const filters = ref(); // Filter in InputText Search
+const filters = ref({global: ''}); // Filter in InputText Search
+// const filterMode = ref({ label: 'Lenient', value: 'lenient' });
+const filterMode = ref("lenient");
 
 let treeTableList = ref([] as any[]); // Store data from get request
 let originalItemList = ref([] as any[]);
@@ -187,11 +188,13 @@ const hideElementsBaseOnFilters = () => {
     </div>
 
     <!-- TODO: ADD FILTERS -->
-
+    <!-- :filters="filters"
+    :filterMode="filterMode.value" -->
         <TreeTable :value="treeTableList"
+                   :filters="filters" :filterMode="'lenient'"
                    :class="`p-treetable-sm`"
                    :tableProps="{ style: { minWidth: '50rem' } }"
-                   :globalFilterFields="['child_description']"
+
                    key="item" ref="dt" id="bom-list">
 
             <template #header>
@@ -221,8 +224,13 @@ const hideElementsBaseOnFilters = () => {
                     </div>
 
                     <!-- KEYWORD SEARCH AND CLEAR BUTTON -->
-                    <span class="p-input-icon-left">
+                    <!-- <span class="p-input-icon-left">
                         <InputText v-model="filters['global'].value" placeholder="Keyword Search" />
+                        <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px;" outlined @click="clearFilter()" />
+                    </span> -->
+
+                    <span class="p-input-icon-left">
+                        <InputText v-model="filters['global']" placeholder="Keyword Search" />
                         <Button type="button" icon="pi pi-filter-slash" label="Clear" style="margin-left: 20px;" outlined @click="clearFilter()" />
                     </span>
 
@@ -239,7 +247,10 @@ const hideElementsBaseOnFilters = () => {
 
                 </div>
             </template>
-            <Column field="item" header="Item ID" expander headerStyle="width: 16rem" style="font-weight:bold"></Column>
+            <Column field="item" header="Item ID" expander headerStyle="width: 16rem" style="font-weight:bold">
+
+            </Column>
+
             <Column field="child_item" header="Item Part Number" headerStyle="width: 24rem"></Column>
             <Column field="child_description" header="Item Description" headerStyle="width: 20rem"></Column>
 
